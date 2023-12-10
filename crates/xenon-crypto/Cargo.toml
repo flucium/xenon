@@ -1,0 +1,22 @@
+[package]
+name = "xenon-crypto"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+
+# https://github.com/sfackler/rust-openssl
+openssl = "0.10.61"
+
+# https://github.com/uuid-rs/uuid
+uuid = {version="1.6.0", features = ["v4"]}
+
+# https://github.com/chronotope/chrono
+chrono = "0.4.31"
+
+# https://github.com/rust-random/
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+
+# Internal
+xenon-common = { path = "../xenon-common" }
