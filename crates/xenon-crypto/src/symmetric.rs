@@ -19,7 +19,7 @@ pub fn decrypt(
 
     let nonce = &message[message.len() - algorithm.iv_length().unwrap_or(0)..];
 
-    let mut plain = match algorithm {
+    let plain = match algorithm {
         Symmetric::Aes128Gcm => aes::aes_128_gcm_decrypt(
             unsafe {
                 symmetric_key
