@@ -5,6 +5,7 @@ use xenon_common::{Error, ErrorKind, Result};
 
 mod aead;
 mod aes;
+mod chacha20;
 
 // ToDo...
 
@@ -56,6 +57,19 @@ pub fn decrypt(
             associated_data,
             cipher,
         ),
+
+        Symmetric::ChaCha20Poly1305 => chacha20::chacha20_poly1305_decrypt(
+            unsafe {
+                symmetric_key
+                    .as_bytes()
+                    .get_unchecked(..symmetric_key.len())
+            }
+            .try_into()
+            .unwrap(),
+            nonce.try_into().unwrap(),
+            associated_data,
+            cipher,
+        ),
     }
     .map_err(|_| {
         Error::new(
@@ -73,7 +87,7 @@ pub fn encrypt(
     message: &[u8],
 ) -> Result<Vec<u8>> {
     // is expired
-    if symmetric_key.expiry().is_expired() == false{
+    if symmetric_key.expiry().is_expired() == false {
         Err(Error::new(
             ErrorKind::Expired,
             String::from("Symmetric key is expired"),
@@ -110,6 +124,19 @@ pub fn encrypt(
             message,
         ),
         Symmetric::Aes256Gcm => aes::aes_256_gcm_encrypt(
+            unsafe {
+                symmetric_key
+                    .as_bytes()
+                    .get_unchecked(..symmetric_key.len())
+            }
+            .try_into()
+            .unwrap(),
+            &nonce,
+            associated_data,
+            message,
+        ),
+
+        Symmetric::ChaCha20Poly1305 => chacha20::chacha20_poly1305_encrypt(
             unsafe {
                 symmetric_key
                     .as_bytes()

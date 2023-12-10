@@ -343,6 +343,7 @@ pub enum Symmetric {
     Aes128Gcm,
     Aes192Gcm,
     Aes256Gcm,
+    ChaCha20Poly1305,
 }
 
 impl Symmetric {
@@ -351,6 +352,7 @@ impl Symmetric {
             Symmetric::Aes128Gcm => SIZE_16_BYTE,
             Symmetric::Aes192Gcm => SIZE_24_BYTE,
             Symmetric::Aes256Gcm => SIZE_32_BYTE,
+            Symmetric::ChaCha20Poly1305 => SIZE_32_BYTE,
         }
     }
 
@@ -363,6 +365,7 @@ impl Symmetric {
             Symmetric::Aes128Gcm => Some(SIZE_12_BYTE),
             Symmetric::Aes192Gcm => Some(SIZE_12_BYTE),
             Symmetric::Aes256Gcm => Some(SIZE_12_BYTE),
+            Symmetric::ChaCha20Poly1305 => Some(SIZE_12_BYTE),
         }
     }
 
@@ -371,6 +374,7 @@ impl Symmetric {
             Symmetric::Aes128Gcm => "aes128gcm",
             Symmetric::Aes192Gcm => "aes192gcm",
             Symmetric::Aes256Gcm => "aes256gcm",
+            Symmetric::ChaCha20Poly1305 => "chacha20poly1305",
         }
     }
 
@@ -379,6 +383,10 @@ impl Symmetric {
             Symmetric::Aes128Gcm => &[0x61, 0x65, 0x73, 0x31, 0x32, 0x38, 0x67, 0x63, 0x6d],
             Symmetric::Aes192Gcm => &[0x61, 0x65, 0x73, 0x31, 0x39, 0x32, 0x67, 0x63, 0x6d],
             Symmetric::Aes256Gcm => &[0x61, 0x65, 0x73, 0x32, 0x35, 0x36, 0x67, 0x63, 0x6d],
+            Symmetric::ChaCha20Poly1305 => &[
+                0x63, 0x68, 0x61, 0x63, 0x68, 0x61, 0x32, 0x30, 0x70, 0x6f, 0x6c, 0x79, 0x31, 0x33,
+                0x30, 0x35,
+            ],
         }
     }
 }
@@ -389,6 +397,7 @@ impl ToString for Symmetric {
             Symmetric::Aes128Gcm => String::from("aes128gcm"),
             Symmetric::Aes192Gcm => String::from("aes192gcm"),
             Symmetric::Aes256Gcm => String::from("aes256gcm"),
+            Symmetric::ChaCha20Poly1305 => String::from("chacha20poly1305"),
         }
     }
 }
@@ -401,6 +410,7 @@ impl TryFrom<String> for Symmetric {
             string if string.eq_ignore_ascii_case("aes128gcm") => Ok(Self::Aes128Gcm),
             string if string.eq_ignore_ascii_case("aes192gcm") => Ok(Self::Aes192Gcm),
             string if string.eq_ignore_ascii_case("aes256gcm") => Ok(Self::Aes256Gcm),
+            string if string.eq_ignore_ascii_case("chacha20poly1305") => Ok(Self::ChaCha20Poly1305),
 
             _ => Err(Error::new(
                 ErrorKind::Unsupported,
@@ -418,6 +428,7 @@ impl TryFrom<&str> for Symmetric {
             string if string.eq_ignore_ascii_case("aes128gcm") => Ok(Self::Aes128Gcm),
             string if string.eq_ignore_ascii_case("aes192gcm") => Ok(Self::Aes192Gcm),
             string if string.eq_ignore_ascii_case("aes256gcm") => Ok(Self::Aes256Gcm),
+            string if string.eq_ignore_ascii_case("chacha20poly1305") => Ok(Self::ChaCha20Poly1305),
 
             _ => Err(Error::new(
                 ErrorKind::Unsupported,
@@ -452,6 +463,15 @@ impl TryFrom<&[u8]> for Symmetric {
                 ]) =>
             {
                 Ok(Self::Aes256Gcm)
+            }
+
+            bytes
+                if bytes.eq_ignore_ascii_case(&[
+                    0x63, 0x68, 0x61, 0x63, 0x68, 0x61, 0x32, 0x30, 0x70, 0x6f, 0x6c, 0x79, 0x31,
+                    0x33, 0x30, 0x35,
+                ]) =>
+            {
+                Ok(Self::ChaCha20Poly1305)
             }
 
             _ => Err(Error::new(
