@@ -1,7 +1,7 @@
 use super::aead::*;
 use core::result::Result;
 use openssl::{error::ErrorStack, symm::Cipher};
-use xenon_common::size::{SIZE_12_BYTE, SIZE_16_BYTE, SIZE_32_BYTE};
+use xenon_common::size::{SIZE_12_BYTE, SIZE_32_BYTE};
 
 /// ChaCha20-Poly1305 decrypt
 /// 
