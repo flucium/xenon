@@ -1,8 +1,10 @@
 use crate::algorithm::Symmetric;
+use crate::rand::gen;
 use crate::symmetric::aes::{aes_128_gcm_decrypt, aes_192_gcm_decrypt, aes_256_gcm_decrypt};
 use crate::symmetric::chacha20::chacha20_poly1305_decrypt;
 // use crate::Uuid;
-use crate::{rand::gen_12, Key, SymmetricKey};
+use crate::{Key, SymmetricKey};
+use xenon_common::size::{SIZE_12_BYTE, SIZE_16_BYTE};
 use xenon_common::{Error, ErrorKind, Result};
 
 use self::aes::{aes_128_gcm_encrypt, aes_192_gcm_encrypt, aes_256_gcm_encrypt};
@@ -123,57 +125,75 @@ pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
     // get key bytes
     let key_bytes = symmetric_key.as_bytes();
 
-    // get iv (nonce)
-    let nonce = gen_12()?;
-
     let mut cipher = Vec::new();
 
     // encrypt
-    let bytes = match algorithm {
-        Symmetric::Aes128Gcm => {
-            aes_128_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message).map_err(
-                |_| {
-                    Error::new(
-                        ErrorKind::EncryptionFailed,
-                        String::from("AES-128-GCM Encryption failed"),
-                    )
-                },
-            )?
-        }
+    let (bytes, nonce) =
+        match algorithm {
+            Symmetric::Aes128Gcm => {
+                // generate nonce
+                let nonce = gen_flexible_iv::<SIZE_12_BYTE>()?;
 
-        Symmetric::Aes192Gcm => {
-            aes_192_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message).map_err(
-                |_| {
-                    Error::new(
-                        ErrorKind::EncryptionFailed,
-                        String::from("AES-192-GCM Encryption failed"),
-                    )
-                },
-            )?
-        }
+                (
+                    aes_128_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
+                        .map_err(|_| {
+                            Error::new(
+                                ErrorKind::EncryptionFailed,
+                                String::from("AES-128-GCM Encryption failed"),
+                            )
+                        })?,
+                    nonce,
+                )
+            }
 
-        Symmetric::Aes256Gcm => {
-            aes_256_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message).map_err(
-                |_| {
-                    Error::new(
-                        ErrorKind::EncryptionFailed,
-                        String::from("AES-256-GCM Encryption failed"),
-                    )
-                },
-            )?
-        }
+            Symmetric::Aes192Gcm => {
+                // generate nonce
+                let nonce = gen_flexible_iv::<SIZE_12_BYTE>()?;
 
-        Symmetric::ChaCha20Poly1305 => {
-            chacha20_poly1305_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message).map_err(
-                |_| {
-                    Error::new(
-                        ErrorKind::EncryptionFailed,
-                        String::from("ChaCha20-Poly1305 Encryption failed"),
-                    )
-                },
-            )?
-        }
-    };
+                (
+                    aes_192_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
+                        .map_err(|_| {
+                            Error::new(
+                                ErrorKind::EncryptionFailed,
+                                String::from("AES-192-GCM Encryption failed"),
+                            )
+                        })?,
+                    nonce,
+                )
+            }
+
+            Symmetric::Aes256Gcm => {
+                // generate nonce
+                let nonce = gen_flexible_iv::<SIZE_12_BYTE>()?;
+
+                (
+                    aes_256_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
+                        .map_err(|_| {
+                            Error::new(
+                                ErrorKind::EncryptionFailed,
+                                String::from("AES-256-GCM Encryption failed"),
+                            )
+                        })?,
+                    nonce,
+                )
+            }
+
+            Symmetric::ChaCha20Poly1305 => {
+                // generate nonce
+                let nonce = gen_flexible_iv::<SIZE_12_BYTE>()?;
+
+                (
+                    chacha20_poly1305_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
+                        .map_err(|_| {
+                            Error::new(
+                                ErrorKind::EncryptionFailed,
+                                String::from("ChaCha20-Poly1305 Encryption failed"),
+                            )
+                        })?,
+                    nonce,
+                )
+            }
+        };
 
     // extend from bytes (cipher)
     cipher.extend_from_slice(&bytes);
@@ -185,13 +205,23 @@ pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
     Ok(cipher)
 }
 
+// flexible iv
+pub fn gen_flexible_iv<const T: usize>() -> Result<[u8; T]> {
+    match T {
+        SIZE_12_BYTE | SIZE_16_BYTE => gen::<T>(),
+        _ => Err(Error::new(
+            ErrorKind::InvalidLength,
+            String::from("IV (Nonce) length is invalid"),
+        ))?,
+    }
+}
 
 /*
-    
+
     !! Under development !!
-        
+
         Unit tests
-    
+
 */
 
 /*
@@ -202,7 +232,7 @@ pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
     AES-256-GCM
     AES-192-GCM
     AES-128-GCM
-    
+
 */
 
 #[test]
