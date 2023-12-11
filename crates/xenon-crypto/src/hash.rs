@@ -6,43 +6,32 @@ use xenon_common::{
 };
 
 pub fn sha3_512_digest(bytes: &[u8]) -> Result<[u8; SIZE_64_BYTE]> {
-    let digest = hash(MessageDigest::sha3_512(), bytes).map_err(|_| Error::internal_error())?;
-
-    let result = unsafe { digest.get_unchecked(..SIZE_64_BYTE) }
-        .try_into()
-        .unwrap();
-
-    Ok(result)
+    message_digest::<SIZE_64_BYTE>(MessageDigest::sha3_512(), bytes)
 }
 
 pub fn sha3_256_digest(bytes: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
-    let digest = hash(MessageDigest::sha3_256(), bytes).map_err(|_| Error::internal_error())?;
-
-    let result = unsafe { digest.get_unchecked(..SIZE_32_BYTE) }
-        .try_into()
-        .unwrap();
-
-    Ok(result)
+    message_digest::<SIZE_32_BYTE>(MessageDigest::sha3_256(), bytes)
 }
 
 pub fn sha512_digest(bytes: &[u8]) -> Result<[u8; SIZE_64_BYTE]> {
-    let digest = hash(MessageDigest::sha512(), bytes).map_err(|_| Error::internal_error())?;
-
-    let result = unsafe { digest.get_unchecked(..SIZE_64_BYTE) }
-        .try_into()
-        .unwrap();
-
-    Ok(result)
+    message_digest::<SIZE_64_BYTE>(MessageDigest::sha512(), bytes)
 }
 
 pub fn sha256_digest(bytes: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
-    let digest = hash(MessageDigest::sha256(), bytes).map_err(|_| Error::internal_error())?;
+    message_digest::<SIZE_32_BYTE>(MessageDigest::sha256(), bytes)
+}
 
-    let result = unsafe { digest.get_unchecked(..SIZE_32_BYTE) }
-        .try_into()
-        .unwrap();
+fn message_digest<const T: usize>(md: MessageDigest, bytes: &[u8]) -> Result<[u8; T]> {
+    if md.size() != T {
+        Err(Error::new(
+            xenon_common::ErrorKind::InvalidLength,
+            format!("The digest length must be {} bytes", T),
+        ))?
+    }
 
-    Ok(result)
+    let digest = hash(md, bytes).map_err(|_| Error::internal_error())?;
+
+    Ok(unsafe { digest.get_unchecked(..T) }.try_into().unwrap())
 }
 
 /*
@@ -106,6 +95,7 @@ fn test_sha256_digest() {
 
 pub mod kdf {
     use openssl::md::Md;
+    use openssl::md::MdRef;
     use openssl::pkey::Id;
     use openssl::pkey_ctx::HkdfMode;
     use openssl::pkey_ctx::PkeyCtx;
@@ -116,40 +106,19 @@ pub mod kdf {
     };
 
     pub fn hkdf_sha512_derive(ikm: &[u8], salt: &[u8], info: &[u8]) -> Result<[u8; SIZE_64_BYTE]> {
-        if ikm.len() == 0 {
-            Err(Error::new(
-                xenon_common::ErrorKind::InvalidLength,
-                String::from("The key length must be at least 1 byte"),
-            ))?
-        }
-
-        let mut ctx = PkeyCtx::new_id(Id::HKDF).map_err(|_| Error::internal_error())?;
-
-        ctx.derive_init().map_err(|_| Error::internal_error())?;
-
-        ctx.set_hkdf_mode(HkdfMode::EXTRACT_THEN_EXPAND)
-            .map_err(|_| Error::internal_error())?;
-
-        ctx.set_hkdf_md(Md::sha512())
-            .map_err(|_| Error::internal_error())?;
-
-        ctx.set_hkdf_key(ikm).map_err(|_| Error::internal_error())?;
-
-        ctx.set_hkdf_salt(salt)
-            .map_err(|_| Error::internal_error())?;
-
-        ctx.add_hkdf_info(info)
-            .map_err(|_| Error::internal_error())?;
-
-        let mut okm = [0u8; SIZE_64_BYTE];
-
-        ctx.derive(Some(&mut okm))
-            .map_err(|_| Error::internal_error())?;
-
-        Ok(okm)
+        hkdf_extract_then_expand::<SIZE_64_BYTE>(Md::sha512(), ikm, salt, info)
     }
 
     pub fn hkdf_sha256_derive(ikm: &[u8], salt: &[u8], info: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
+        hkdf_extract_then_expand::<SIZE_32_BYTE>(Md::sha256(), ikm, salt, info)
+    }
+
+    fn hkdf_extract_then_expand<const T: usize>(
+        md: &MdRef,
+        ikm: &[u8],
+        salt: &[u8],
+        info: &[u8],
+    ) -> Result<[u8; T]> {
         if ikm.len() == 0 {
             Err(Error::new(
                 xenon_common::ErrorKind::InvalidLength,
@@ -164,8 +133,7 @@ pub mod kdf {
         ctx.set_hkdf_mode(HkdfMode::EXTRACT_THEN_EXPAND)
             .map_err(|_| Error::internal_error())?;
 
-        ctx.set_hkdf_md(Md::sha256())
-            .map_err(|_| Error::internal_error())?;
+        ctx.set_hkdf_md(md).map_err(|_| Error::internal_error())?;
 
         ctx.set_hkdf_key(ikm).map_err(|_| Error::internal_error())?;
 
@@ -175,7 +143,7 @@ pub mod kdf {
         ctx.add_hkdf_info(info)
             .map_err(|_| Error::internal_error())?;
 
-        let mut okm = [0u8; SIZE_32_BYTE];
+        let mut okm = [0u8; T];
 
         ctx.derive(Some(&mut okm))
             .map_err(|_| Error::internal_error())?;
