@@ -1,6 +1,6 @@
 use crate::{
     algorithm::Hasher,
-    hash::{sha256_digest, sha3_256_digest, sha3_512_digest, sha512_digest},
+    hash::{sha2::*,sha3::*},
     Key, PublicKey,
 };
 use xenon_common::{format::hex, Error, Result};
