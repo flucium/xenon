@@ -3,7 +3,7 @@
 */
 use crate::algorithm::Hasher;
 use crate::curve25519::ed25519_verify;
-use crate::hash::{sha256_digest, sha3_256_digest, sha3_512_digest, sha512_digest};
+use crate::hash::{sha2::*,sha3::*};
 use crate::{algorithm::Asymmetric, curve25519::ed25519_sign, Key, PrivateKey};
 use crate::{PublicKey, Utc, Uuid};
 use xenon_common::{Error, ErrorKind, Result};
