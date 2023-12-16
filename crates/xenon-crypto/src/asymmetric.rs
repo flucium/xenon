@@ -2,13 +2,18 @@
     ToDo
 */
 use crate::algorithm::Hasher;
-use crate::curve25519::ed25519_verify;
-use crate::hash::{sha2::*,sha3::*};
-use crate::{algorithm::Asymmetric, curve25519::ed25519_sign, Key, PrivateKey};
+use crate::hash::{sha2::*, sha3::*};
+use crate::{
+    algorithm::Asymmetric,
+    curve25519::{ed25519_sign, ed25519_verify},
+    curve448::{ed448_sign, ed448_verify},
+    Key, PrivateKey,
+};
 use crate::{PublicKey, Utc, Uuid};
 use xenon_common::{Error, ErrorKind, Result};
 
 pub(super) mod curve25519;
+pub(super) mod curve448;
 mod dh;
 mod signer;
 mod verifier;
@@ -249,6 +254,12 @@ pub fn verify(public_key: &PublicKey, message: &[u8], signature: &Signature) -> 
             signature.as_bytes().try_into().unwrap(),
         )
         .map_err(|_| Error::new(ErrorKind::VerifyFailed, String::from("Verify failed")))?,
+        Asymmetric::Ed448 => ed448_verify(
+            public_key.as_bytes().try_into().unwrap(),
+            &hash,
+            signature.as_bytes().try_into().unwrap(),
+        )
+        .map_err(|_| Error::new(ErrorKind::VerifyFailed, String::from("Verify failed")))?,
 
         _ => Err(Error::new(
             ErrorKind::Unsupported,
@@ -288,6 +299,9 @@ pub fn sign(private_key: &PrivateKey, hasher: Hasher, message: &[u8]) -> Result<
     // Signature
     let bytes = match algorithm {
         Asymmetric::Ed25519 => ed25519_sign(private_key.as_bytes().try_into().unwrap(), &hash)
+            .map_err(|_| Error::new(ErrorKind::SignFailed, String::from("Sign failed")))?
+            .to_vec(),
+        Asymmetric::Ed448 => ed448_sign(private_key.as_bytes().try_into().unwrap(), &hash)
             .map_err(|_| Error::new(ErrorKind::SignFailed, String::from("Sign failed")))?
             .to_vec(),
         _ => Err(Error::new(
