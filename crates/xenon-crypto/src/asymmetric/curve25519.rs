@@ -1,6 +1,6 @@
 use core::result::Result;
 use openssl::error::ErrorStack;
-use openssl::pkey::{Id, PKey, Private, Public};
+use openssl::pkey::{Id, PKey};
 use xenon_common::size::{SIZE_32_BYTE, SIZE_64_BYTE};
 
 use crate::asymmetric::{dh::diffie_hellman, signer::sign, verifier::verify};
@@ -87,7 +87,7 @@ pub fn ed25519_gen_public_key(
     Ok(public_key)
 }
 
-/// X25519 diffie hellman ephemeral
+/// X25519 Diffie-Hellman ephemeral
 ///
 /// # Arguments
 /// * `public_key` - Public key
@@ -113,7 +113,7 @@ pub fn x25519_diffie_hellman_ephemeral(
     Ok((ephemeral_public_key, shared_secret))
 }
 
-/// X25519 diffie hellman
+/// X25519 Diffie-Hellman
 ///
 /// # Arguments
 /// * `private_key` - Private key

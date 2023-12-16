@@ -1,6 +1,6 @@
 use core::result::Result;
 use openssl::error::ErrorStack;
-use openssl::pkey::{Id, PKey, Private, Public};
+use openssl::pkey::{Id, PKey};
 use xenon_common::size::{SIZE_114_BYTE, SIZE_56_BYTE, SIZE_57_BYTE};
 
 use crate::asymmetric::{dh::diffie_hellman, signer::sign, verifier::verify};
