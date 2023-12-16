@@ -1,6 +1,3 @@
-/*
-    ToDo
-*/
 use crate::algorithm::Hasher;
 use crate::hash::{sha2::*, sha3::*};
 use crate::{
