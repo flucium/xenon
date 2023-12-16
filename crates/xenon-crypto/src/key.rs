@@ -1,6 +1,6 @@
 use crate::{
     algorithm::{Asymmetric, Symmetric},
-    curve25519,
+    curve25519, curve448,
     rand::gen_32,
     Expiry, Uuid,
 };
@@ -85,11 +85,20 @@ impl PrivateKey {
         let expiry = Expiry::new();
 
         let bytes = match algorithm {
-            Asymmetric::Ed25519 => curve25519::ed25519_gen_private_key(),
-            Asymmetric::X25519 => curve25519::x25519_gen_private_key(),
-        }
-        .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
-        .to_vec();
+            Asymmetric::Ed25519 => curve25519::ed25519_gen_private_key()
+                .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+                .to_vec(),
+            Asymmetric::X25519 => curve25519::x25519_gen_private_key()
+                .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+                .to_vec(),
+
+            Asymmetric::Ed448 => curve448::ed448_gen_private_key()
+                .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+                .to_vec(),
+            Asymmetric::X448 => curve448::x448_gen_private_key()
+                .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+                .to_vec(),
+        };
 
         Ok(Self {
             id,
@@ -149,7 +158,9 @@ impl PublicKey {
                 }
                 .try_into()
                 .unwrap(),
-            ),
+            )
+            .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+            .to_vec(),
 
             Asymmetric::X25519 => curve25519::x25519_gen_public_key(
                 unsafe {
@@ -159,10 +170,34 @@ impl PublicKey {
                 }
                 .try_into()
                 .unwrap(),
-            ),
-        }
-        .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
-        .to_vec();
+            )
+            .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+            .to_vec(),
+
+            Asymmetric::Ed448 => curve448::ed448_gen_public_key(
+                unsafe {
+                    priavte_key
+                        .as_bytes()
+                        .get_unchecked(..priavte_key.algorithm.key_length())
+                }
+                .try_into()
+                .unwrap(),
+            )
+            .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+            .to_vec(),
+
+            Asymmetric::X448 => curve448::x448_gen_public_key(
+                unsafe {
+                    priavte_key
+                        .as_bytes()
+                        .get_unchecked(..priavte_key.algorithm.key_length())
+                }
+                .try_into()
+                .unwrap(),
+            )
+            .map_err(|_| Error::new(ErrorKind::Internal, String::default()))?
+            .to_vec(),
+        };
 
         Ok(Self {
             id: priavte_key.id.clone(),
