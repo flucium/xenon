@@ -1,5 +1,5 @@
 use xenon_common::{
-    size::{SIZE_12_BYTE, SIZE_16_BYTE, SIZE_24_BYTE, SIZE_32_BYTE, SIZE_64_BYTE},
+    size::{SIZE_12_BYTE, SIZE_16_BYTE, SIZE_24_BYTE, SIZE_32_BYTE, SIZE_64_BYTE, SIZE_57_BYTE, SIZE_56_BYTE, SIZE_114_BYTE},
     Error, ErrorKind, Result,
 };
 
@@ -494,6 +494,9 @@ impl TryInto<String> for Symmetric {
 pub enum Asymmetric {
     Ed25519,
     X25519,
+    
+    Ed448,
+    X448,
 }
 
 impl Asymmetric {
@@ -501,6 +504,8 @@ impl Asymmetric {
         match self {
             Asymmetric::Ed25519 => "ed25519",
             Asymmetric::X25519 => "x25519",
+            Asymmetric::Ed448 => "ed448",
+            Asymmetric::X448 => "x448",
         }
     }
 
@@ -508,6 +513,8 @@ impl Asymmetric {
         match self {
             Asymmetric::Ed25519 => &[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39],
             Asymmetric::X25519 => &[0x78, 0x32, 0x35, 0x35, 0x31, 0x39],
+            Asymmetric::Ed448 => &[0x65, 0x64, 0x34, 0x34, 0x38],
+            Asymmetric::X448 => &[0x78, 0x34, 0x34, 0x38],
         }
     }
 
@@ -515,12 +522,15 @@ impl Asymmetric {
         match self {
             Asymmetric::Ed25519 => SIZE_32_BYTE,
             Asymmetric::X25519 => SIZE_32_BYTE,
+            Asymmetric::Ed448 => SIZE_57_BYTE,
+            Asymmetric::X448 => SIZE_56_BYTE,
         }
     }
 
     pub fn signature_length(&self) -> Result<usize> {
         match self {
             Asymmetric::Ed25519 => Ok(SIZE_64_BYTE),
+            Asymmetric::Ed448 => Ok(SIZE_114_BYTE),
             _ => Err(Error::new(
                 ErrorKind::Unsupported,
                 String::from("Unsupported signer"),
@@ -534,6 +544,8 @@ impl ToString for Asymmetric {
         match self {
             Asymmetric::Ed25519 => String::from("ed25519"),
             Asymmetric::X25519 => String::from("x25519"),
+            Asymmetric::Ed448 => String::from("ed448"),
+            Asymmetric::X448 => String::from("x448"),
         }
     }
 }
@@ -545,6 +557,8 @@ impl TryFrom<String> for Asymmetric {
         match string {
             string if string.eq_ignore_ascii_case("Ed25519") => Ok(Self::Ed25519),
             string if string.eq_ignore_ascii_case("X25519") => Ok(Self::X25519),
+            string if string.eq_ignore_ascii_case("Ed448") => Ok(Self::Ed448),
+            string if string.eq_ignore_ascii_case("X448") => Ok(Self::X448),
 
             _ => Err(Error::new(
                 ErrorKind::Unsupported,
@@ -561,6 +575,8 @@ impl TryFrom<&str> for Asymmetric {
         match string {
             string if string.eq_ignore_ascii_case("Ed25519") => Ok(Self::Ed25519),
             string if string.eq_ignore_ascii_case("X25519") => Ok(Self::X25519),
+            string if string.eq_ignore_ascii_case("Ed448") => Ok(Self::Ed448),
+            string if string.eq_ignore_ascii_case("X448") => Ok(Self::X448),
             _ => Err(Error::new(
                 ErrorKind::Unsupported,
                 String::from("Unsupported asymmetric algorithm"),
@@ -579,6 +595,12 @@ impl TryFrom<&[u8]> for Asymmetric {
             }
             bytes if bytes.eq_ignore_ascii_case(&[0x78, 0x32, 0x35, 0x35, 0x31, 0x39]) => {
                 Ok(Self::X25519)
+            }
+            bytes if bytes.eq_ignore_ascii_case(&[0x65, 0x64, 0x34, 0x34, 0x38]) => {
+                Ok(Self::Ed448)
+            }
+            bytes if bytes.eq_ignore_ascii_case(&[0x78, 0x34, 0x34, 0x38]) => {
+                Ok(Self::X448)
             }
 
             _ => Err(Error::new(
