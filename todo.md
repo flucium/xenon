@@ -1,6 +1,14 @@
 - [ ] Examples
 - [ ] Doc comment
 
+- CLI App
+  - [ ] ...
+
+- KeyRing
+  - [ ] Ring (SQLite)
+  - [ ] RingBuilder
+  - [ ] ...
+
 - CSPRNG
   - [x] OpenSSL CSPRNG
   - [ ] ChaCha Rng
@@ -34,7 +42,9 @@
 
  - Symmetric
   - [ ] REFACTORING
-  - [ ] ChaCha20-Poly1305
+  - [ ] Flexible IV (Nonce)
+  - [ ] Assosiated Data
+  - [x] ChaCha20-Poly1305
   - [x] AES-128-GCM
   - [x] AES-192-GCM
   - [x] AES-256-GCM
@@ -55,7 +65,8 @@
   
  - Format
   - [ ] REFACTORING
-  - [ ] Base64 (constant-time)
+  - [x] Base64
+  - [ ] PKCS12
   - [x] Hex
   - [ ] MIME
   - [ ] ...
@@ -68,3 +79,4 @@
   - [x] Date Time (UTC)
   - [x] Expiry
   - [x] Fingerprint (Public key)
+  - [ ] Timestamp
