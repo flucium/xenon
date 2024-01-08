@@ -55,9 +55,7 @@ pub fn chacha20_poly1305_encrypt(
 
 /*
     Unit Tests
-*/
 
-/*
     ChaCha20-Poly1305
         test_chacha20_poly1305
         test_chacha20_poly1305_decrypt
@@ -88,7 +86,7 @@ fn test_symmetric_chacha20_poly1305_decrypt() {
     let cipher = chacha20_poly1305_encrypt(&key, &nonce, &associated_data, &message).unwrap();
 
     let plain = chacha20_poly1305_decrypt(&key, &nonce, &associated_data, &cipher);
-    
+
     assert!(plain.is_ok());
 }
 

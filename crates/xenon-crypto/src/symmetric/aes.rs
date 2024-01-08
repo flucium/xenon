@@ -157,19 +157,21 @@ pub fn aes_256_gcm_encrypt(
 
 /*
     Unit tests
-*/
-
-/*
-    AES-128-GCM
-    AES-192-GCM
-    AES-256-GCM
-*/
-
-/*
+    ---------
     AES-128-GCM
         test_aes_128_gcm
         test_aes_128_gcm_decrypt
         test_aes_128_gcm_encrypt
+
+    AES-192-GCM
+        test_aes_192_gcm
+        test_aes_192_gcm_decrypt
+        test_aes_192_gcm_encrypt
+    
+    AES-256-GCM
+        test_aes_256_gcm
+        test_aes_256_gcm_decrypt
+        test_aes_256_gcm_encrypt
 */
 
 #[test]
@@ -212,12 +214,6 @@ fn test_aes_128_gcm_encrypt() {
     assert!(cipher.is_ok());
 }
 
-/*
-    AES-192-GCM
-        test_aes_192_gcm
-        test_aes_192_gcm_decrypt
-        test_aes_192_gcm_encrypt
-*/
 
 #[test]
 fn test_aes_192_gcm() {
@@ -259,12 +255,6 @@ fn test_aes_192_gcm_encrypt() {
     assert!(cipher.is_ok());
 }
 
-/*
-    AES-256-GCM
-        test_aes_256_gcm
-        test_aes_256_gcm_decrypt
-        test_aes_256_gcm_encrypt
-*/
 
 #[test]
 fn test_aes_256_gcm() {
