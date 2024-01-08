@@ -1,16 +1,16 @@
+mod algorithm;
 mod asymmetric;
 mod expiry;
 mod fingerprint;
+mod hash;
 mod hybrid;
 mod key;
 mod symmetric;
-
 // pub mod
-pub mod algorithm;
-pub mod hash;
 pub mod rand;
 
 // pub use
+pub use algorithm::*;
 pub use asymmetric::*;
 pub use expiry::*;
 pub use fingerprint::*;
@@ -23,17 +23,16 @@ pub use chrono::{NaiveDate as Date, Utc};
 pub use openssl;
 pub use uuid::Uuid;
 
-
 /// Compare two byte slices in constant time.
-/// 
+///
 /// # Example
 /// ```
 /// use xenon_crypto::eq;
-/// 
+///
 /// let a = b"Hello";
-/// 
+///
 /// let b = b"Hello";
-/// 
+///
 /// assert!(eq(a, b));
 /// ```
 pub fn eq(a: impl AsRef<[u8]>, b: impl AsRef<[u8]>) -> bool {
@@ -46,4 +45,9 @@ pub fn eq(a: impl AsRef<[u8]>, b: impl AsRef<[u8]>) -> bool {
     }
 
     openssl::memcmp::eq(a, b)
+}
+
+/// Get the current timestamp in milliseconds.
+pub fn timestamp() -> u64 {
+    Utc::now().timestamp_millis() as u64
 }
