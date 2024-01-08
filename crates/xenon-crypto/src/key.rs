@@ -8,18 +8,24 @@ use crate::{
 use xenon_common::{Error, ErrorKind, Result};
 
 pub trait Key {
+    /// Returns the key id.
     fn id(&self) -> &Uuid;
 
+    /// Returns the key algorithm name.
     fn algorithm(&self) -> &str;
 
+    /// Returns the key expiry.
     fn expiry(&self) -> &Expiry;
 
+    /// Returns the key length.
     fn len(&self) -> usize;
 
+    /// Returns the key bytes.
     fn as_bytes(&self) -> &[u8];
 }
 
 pub trait AsymmetricKey: Key {
+    /// Returns the key signature.
     fn signature(&self) -> Option<&[u8]>;
 }
 
@@ -32,6 +38,21 @@ pub struct SymmetricKey {
 }
 
 impl SymmetricKey {
+    /// Creates a new symmetric key from a slice.
+    ///
+    /// # Arguments
+    /// * `algorithm` - The symmetric algorithm.
+    /// * `bytes` - The key bytes.
+    ///
+    /// # Errors
+    /// Returns an error if the key length is invalid.
+    ///
+    /// # Example
+    /// ```
+    /// use xenon_crypto::{Symmetric, SymmetricKey};
+    ///
+    /// let key = SymmetricKey::new_from_slice(Symmetric::Aes256Gcm, &[0; 32]).unwrap();
+    /// ```
     pub fn new_from_slice(algorithm: Symmetric, bytes: &[u8]) -> Result<Self> {
         let id = Uuid::new_v4();
 
@@ -56,6 +77,20 @@ impl SymmetricKey {
         })
     }
 
+    /// Generates a new symmetric key.
+    ///
+    /// # Arguments
+    /// * `algorithm` - The symmetric algorithm.
+    ///
+    /// # Errors
+    /// Returns an internal error if the key generation fails.
+    ///
+    /// # Example
+    /// ```
+    /// use xenon_crypto::{Symmetric, SymmetricKey};
+    ///
+    /// let key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
+    /// ```
     pub fn generate(algorithm: Symmetric) -> Result<Self> {
         let id = Uuid::new_v4();
 
@@ -71,6 +106,23 @@ impl SymmetricKey {
         })
     }
 
+    /// Derives a new symmetric key from a key derivation function.
+    ///
+    /// # Arguments
+    /// * `algorithm` - The symmetric algorithm.
+    /// * `kdf` - The key derivation function.
+    ///
+    /// # Errors
+    /// Returns an internal error if the key derivation fails.
+    ///
+    /// # Example
+    /// ```
+    /// use xenon_crypto::{Symmetric, SymmetricKey, Kdf};
+    ///
+    /// let key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
+    ///
+    /// let derived_key = key.derive(Symmetric::Aes256Gcm, Kdf::HkdfSha256).unwrap();
+    /// ```
     pub fn derive(&self, algorithm: Symmetric, kdf: Kdf) -> Result<Self> {
         let symmetric = match kdf {
             Kdf::HkdfSha256 => Self::new_from_slice(
@@ -228,6 +280,20 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
+    /// Creates a new private key from a slice.
+    ///
+    /// # Arguments
+    /// * `algorithm` - The asymmetric algorithm.
+    ///
+    /// # Errors
+    /// Returns an internal error if the key generation fails.
+    ///
+    /// # Example
+    /// ```
+    /// use xenon_crypto::{Asymmetric, PrivateKey};
+    ///
+    /// let private_key = PrivateKey::generate(Asymmetric::Ed25519).unwrap();
+    /// ```
     pub fn generate(algorithm: Asymmetric) -> Result<Self> {
         let id = Uuid::new_v4();
 
@@ -436,6 +502,21 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
+    /// Creates a new public key from a slice.
+    ///
+    /// # Arguments
+    /// * `algorithm` - The asymmetric algorithm.
+    /// * `bytes` - The key bytes.
+    ///
+    /// # Errors
+    /// Returns an error if the key length is invalid.
+    ///
+    /// # Example
+    /// ```
+    /// use xenon_crypto::{Asymmetric, PublicKey};
+    ///
+    /// let public_key = PublicKey::new_from_slice(Asymmetric::Ed25519, &[0; 32]).unwrap();
+    /// ```
     pub fn new_from_slice(algorithm: Asymmetric, bytes: &[u8]) -> Result<Self> {
         let id = Uuid::new_v4();
 
@@ -461,6 +542,22 @@ impl PublicKey {
         })
     }
 
+    /// Generates a new public key from a private key.
+    ///
+    /// # Arguments
+    /// * `priavte_key` - The private key.
+    ///
+    /// # Errors
+    /// Returns an internal error if the key generation fails.
+    ///
+    /// # Example
+    /// ```
+    /// use xenon_crypto::{Asymmetric, PrivateKey, PublicKey};
+    ///
+    /// let private_key = PrivateKey::generate(Asymmetric::Ed25519).unwrap();
+    ///
+    /// let public_key = PublicKey::from_private_key(&private_key).unwrap();
+    /// ```
     pub fn from_private_key(priavte_key: &PrivateKey) -> Result<Self> {
         let bytes = match priavte_key.algorithm {
             Asymmetric::Ed25519 => curve25519::ed25519_gen_public_key(
