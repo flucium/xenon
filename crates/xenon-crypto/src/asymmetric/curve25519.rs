@@ -173,19 +173,19 @@ pub fn x25519_gen_public_key(
 
 /*
     Unit tests
-*/
 
-/*
-    ED25519
-    X25519
-*/
-
-/*
     Ed25519
         ed25519_verify
         ed25519_sign
         ed25519_gen_private_key
         ed25519_gen_public_key
+
+    X25519
+        x25519_diffie_hellman_ephemeral
+        x25519_diffie_hellman
+        x25519_gen_shared_secret
+        x25519_gen_private_key
+        x25519_gen_public_key
 */
 
 #[test]
@@ -231,15 +231,6 @@ fn test_ed25519_gen_public_key() {
 
     assert!(public_key.is_ok());
 }
-
-/*
-    X25519
-        x25519_diffie_hellman_ephemeral
-        x25519_diffie_hellman
-        x25519_gen_shared_secret
-        x25519_gen_private_key
-        x25519_gen_public_key
-*/
 
 #[test]
 fn test_x25519_diffie_hellman_ephemeral() {

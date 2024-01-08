@@ -172,19 +172,18 @@ pub fn x448_gen_public_key(
 
 /*
     Unit tests
-*/
-
-/*
-    Ed448
-    X448
-*/
-
-/*
     Ed448
         ed448_verify
         ed448_sign
         ed448_gen_private_key
         ed448_gen_public_key
+
+    X448
+        x448_diffie_hellman_ephemeral
+        x448_diffie_hellman
+        x448_shared_secret
+        x448_gen_private_key
+        x448_gen_public_key
 */
 
 #[test]
@@ -231,15 +230,6 @@ fn test_ed448_gen_private_key() {
     assert!(private_key.is_ok());
 }
 
-/*
-    X448
-        x448_diffie_hellman_ephemeral
-        x448_diffie_hellman
-        x448_shared_secret
-        x448_gen_private_key
-        x448_gen_public_key
-*/
-
 #[test]
 fn test_x448_diffie_hellman_ephemeral() {
     // alice
@@ -279,7 +269,6 @@ fn test_x448_diffie_hellman() {
     assert_eq!(alice_shared_secret, bob_shared_secret);
 }
 
-
 #[test]
 fn test_x448_shared_secret() {
     let private_key = x448_gen_private_key().unwrap();
@@ -290,7 +279,6 @@ fn test_x448_shared_secret() {
 
     assert!(shared_secret.is_ok());
 }
-
 
 #[test]
 fn test_x448_gen_private_key() {
