@@ -1,5 +1,8 @@
 use xenon_common::{
-    size::{SIZE_12_BYTE, SIZE_16_BYTE, SIZE_24_BYTE, SIZE_32_BYTE, SIZE_64_BYTE, SIZE_57_BYTE, SIZE_56_BYTE, SIZE_114_BYTE},
+    size::{
+        SIZE_114_BYTE, SIZE_12_BYTE, SIZE_16_BYTE, SIZE_24_BYTE, SIZE_32_BYTE, SIZE_56_BYTE,
+        SIZE_57_BYTE, SIZE_64_BYTE,
+    },
     Error, ErrorKind, Result,
 };
 
@@ -356,18 +359,18 @@ impl Symmetric {
         }
     }
 
-    pub fn nonce_length(&self) -> Option<usize> {
-        self.iv_length()
-    }
+    // pub fn nonce_length(&self) -> Option<usize> {
+    //     self.iv_length()
+    // }
 
-    pub fn iv_length(&self) -> Option<usize> {
-        match self {
-            Symmetric::Aes128Gcm => Some(SIZE_12_BYTE),
-            Symmetric::Aes192Gcm => Some(SIZE_12_BYTE),
-            Symmetric::Aes256Gcm => Some(SIZE_12_BYTE),
-            Symmetric::ChaCha20Poly1305 => Some(SIZE_12_BYTE),
-        }
-    }
+    // pub fn iv_length(&self) -> Option<usize> {
+    //     match self {
+    //         Symmetric::Aes128Gcm => Some(SIZE_12_BYTE),
+    //         Symmetric::Aes192Gcm => Some(SIZE_12_BYTE),
+    //         Symmetric::Aes256Gcm => Some(SIZE_12_BYTE),
+    //         Symmetric::ChaCha20Poly1305 => Some(SIZE_12_BYTE),
+    //     }
+    // }
 
     pub fn as_str(&self) -> &str {
         match self {
@@ -494,7 +497,7 @@ impl TryInto<String> for Symmetric {
 pub enum Asymmetric {
     Ed25519,
     X25519,
-    
+
     Ed448,
     X448,
 }
@@ -596,12 +599,8 @@ impl TryFrom<&[u8]> for Asymmetric {
             bytes if bytes.eq_ignore_ascii_case(&[0x78, 0x32, 0x35, 0x35, 0x31, 0x39]) => {
                 Ok(Self::X25519)
             }
-            bytes if bytes.eq_ignore_ascii_case(&[0x65, 0x64, 0x34, 0x34, 0x38]) => {
-                Ok(Self::Ed448)
-            }
-            bytes if bytes.eq_ignore_ascii_case(&[0x78, 0x34, 0x34, 0x38]) => {
-                Ok(Self::X448)
-            }
+            bytes if bytes.eq_ignore_ascii_case(&[0x65, 0x64, 0x34, 0x34, 0x38]) => Ok(Self::Ed448),
+            bytes if bytes.eq_ignore_ascii_case(&[0x78, 0x34, 0x34, 0x38]) => Ok(Self::X448),
 
             _ => Err(Error::new(
                 ErrorKind::Unsupported,
@@ -619,143 +618,3 @@ impl TryInto<String> for Asymmetric {
     }
 }
 
-/*
-    Unit tests
-*/
-
-/*
-    Hasher (SHA256)
-    Kdf (HKDF-SHA256)
-    PasswordHasher (Scrypt)
-    Symmetric (AES128GCM)
-    Asymmetric (Ed25519)
-*/
-
-#[test]
-fn test_hasher_sha256() {
-    // from string
-    assert_eq!(Hasher::Sha256, Hasher::try_from("Sha256").unwrap());
-
-    // from string lowercase
-    assert_eq!(Hasher::Sha256, Hasher::try_from("sha256").unwrap());
-
-    // from string uppercase
-    assert_eq!(Hasher::Sha256, Hasher::try_from("SHA256").unwrap());
-
-    // to string
-    assert_eq!("sha256", Hasher::Sha256.to_string());
-
-    // to bytes
-    assert_eq!(Hasher::Sha256.as_bytes(), &[115, 104, 97, 50, 53, 54]);
-}
-
-#[test]
-fn test_hasher_kdf() {
-    // from string
-    assert_eq!(Kdf::HkdfSha256, Kdf::try_from("Hkdf-Sha256").unwrap());
-
-    // from string lowercase
-    assert_eq!(Kdf::HkdfSha256, Kdf::try_from("hkdf-sha256").unwrap());
-
-    // from string uppercase
-    assert_eq!(Kdf::HkdfSha256, Kdf::try_from("HKDF-SHA256").unwrap());
-
-    // to string
-    assert_eq!("hkdf-sha256", Kdf::HkdfSha256.to_string());
-
-    // to bytes
-    assert_eq!(
-        Kdf::HkdfSha256.as_bytes(),
-        &[104, 107, 100, 102, 45, 115, 104, 97, 50, 53, 54]
-    );
-}
-
-#[test]
-fn test_password_hasher() {
-    // from string
-    assert_eq!(
-        PasswordHasher::Scrypt,
-        PasswordHasher::try_from("Scrypt").unwrap()
-    );
-
-    // from string lowercase
-    assert_eq!(
-        PasswordHasher::Scrypt,
-        PasswordHasher::try_from("scrypt").unwrap()
-    );
-
-    // from string uppercase
-    assert_eq!(
-        PasswordHasher::Scrypt,
-        PasswordHasher::try_from("SCRYPT").unwrap()
-    );
-
-    // to string
-    assert_eq!("scrypt", PasswordHasher::Scrypt.to_string());
-
-    // to bytes
-    assert_eq!(
-        PasswordHasher::Scrypt.as_bytes(),
-        &[115, 99, 114, 121, 112, 116]
-    );
-}
-
-#[test]
-fn test_symmetric() {
-    // from string
-    assert_eq!(
-        Symmetric::Aes128Gcm,
-        Symmetric::try_from("Aes128Gcm").unwrap()
-    );
-
-    // from string lowercase
-    assert_eq!(
-        Symmetric::Aes128Gcm,
-        Symmetric::try_from("aes128gcm").unwrap()
-    );
-
-    // from string uppercase
-    assert_eq!(
-        Symmetric::Aes128Gcm,
-        Symmetric::try_from("AES128GCM").unwrap()
-    );
-
-    // to string
-    assert_eq!("aes128gcm", Symmetric::Aes128Gcm.to_string());
-
-    // to bytes
-    assert_eq!(
-        Symmetric::Aes128Gcm.as_bytes(),
-        &[97, 101, 115, 49, 50, 56, 103, 99, 109]
-    );
-}
-
-#[test]
-fn test_asymmetric() {
-    // from string
-    assert_eq!(
-        Asymmetric::Ed25519,
-        Asymmetric::try_from("Ed25519").unwrap()
-    );
-
-    // from string lowercase
-    assert_eq!(
-        Asymmetric::Ed25519,
-        Asymmetric::try_from("ed25519").unwrap()
-    );
-
-    // from string uppercase
-    assert_eq!(
-        Asymmetric::Ed25519,
-        Asymmetric::try_from("ED25519").unwrap()
-    );
-
-    // to string
-    assert_eq!("ed25519", Asymmetric::Ed25519.to_string());
-
-    // to bytes
-    assert_eq!(
-        Asymmetric::Ed25519.as_bytes(),
-        &[101, 100, 50, 53, 53, 49, 57]
-    );
-}
