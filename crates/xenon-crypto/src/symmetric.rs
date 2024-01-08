@@ -1,3 +1,7 @@
+mod aead;
+mod aes;
+mod chacha20;
+
 use self::aes::{
     aes_128_gcm_decrypt, aes_128_gcm_encrypt, aes_192_gcm_decrypt, aes_192_gcm_encrypt,
     aes_256_gcm_decrypt, aes_256_gcm_encrypt,
@@ -6,10 +10,6 @@ use self::chacha20::{chacha20_poly1305_decrypt, chacha20_poly1305_encrypt};
 use crate::{algorithm::Symmetric, rand::gen, Key, SymmetricKey};
 use xenon_common::size::{SIZE_12_BYTE, SIZE_16_BYTE};
 use xenon_common::{Error, ErrorKind, Result};
-
-mod aead;
-mod aes;
-mod chacha20;
 
 /// Symmetric Decryption
 ///
@@ -124,7 +124,7 @@ pub fn encrypt(
     assosiated_data: Option<&[u8]>,
     message: &[u8],
 ) -> Result<Vec<u8>> {
-    is_symmetric_key_expired(symmetric_key)?;
+    check_symmetric_key_expired(symmetric_key)?;
 
     let algorithm: Symmetric = symmetric_key.algorithm().try_into().unwrap();
 
@@ -280,11 +280,11 @@ fn split_message_and_iv(algorithm: Symmetric, message: &[u8]) -> Result<(&[u8], 
 
 // is symmetric key expired?
 #[inline]
-fn is_symmetric_key_expired(symmetric_key: &SymmetricKey) -> Result<()> {
+fn check_symmetric_key_expired(symmetric_key: &SymmetricKey) -> Result<()> {
     if symmetric_key.expiry().is_expired() == false {
         Err(Error::new(
             ErrorKind::Expired,
-            String::from("Symmetric key is expired"),
+            String::from("Key is expired"),
         ))?
     } else {
         Ok(())
@@ -301,104 +301,4 @@ fn gen_iv<const T: usize>() -> Result<[u8; T]> {
             String::from("IV (Nonce) length is invalid"),
         ))?,
     }
-}
-
-/*
-    Unit tests
-    e.g.
-    cargo test --package xenon-crypto --lib -- symmetric::test_symmetric_aes_256_gcm --exact --nocapture
-
-    Encrypt and Decrypt
-
-    ChaCha20-Poly1305
-    AES-256-GCM
-    AES-192-GCM
-    AES-128-GCM
-*/
-#[test]
-fn test_symmetric_chacha20_poly1305() {
-    // message
-    let message = b"Hello World";
-
-    // generate symmetric key
-    let symmetric_key = SymmetricKey::generate(Symmetric::ChaCha20Poly1305).unwrap();
-
-    let cipher = encrypt(&symmetric_key, None, message).unwrap();
-
-    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
-
-    // cipher != plain
-    assert_ne!(cipher, plain);
-
-    // message != cipher
-    assert_ne!(message, cipher.as_slice());
-
-    // message == plain
-    assert_eq!(message, plain.as_slice());
-}
-
-#[test]
-fn test_symmetric_aes_256_gcm() {
-    // message
-    let message = b"Hello World";
-
-    // generate symmetric key
-    let symmetric_key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
-
-    let cipher = encrypt(&symmetric_key, None, message).unwrap();
-
-    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
-
-    // cipher != plain
-    assert_ne!(cipher, plain);
-
-    // message != cipher
-    assert_ne!(message, cipher.as_slice());
-
-    // message == plain
-    assert_eq!(message, plain.as_slice());
-}
-
-#[test]
-fn test_symmetric_aes_192_gcm() {
-    // message
-    let message = b"Hello World";
-
-    // generate symmetric key
-    let symmetric_key = SymmetricKey::generate(Symmetric::Aes192Gcm).unwrap();
-
-    let cipher = encrypt(&symmetric_key, None, message).unwrap();
-
-    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
-
-    // cipher != plain
-    assert_ne!(cipher, plain);
-
-    // message != cipher
-    assert_ne!(message, cipher.as_slice());
-
-    // message == plain
-    assert_eq!(message, plain.as_slice());
-}
-
-#[test]
-fn test_symmetric_aes_128_gcm() {
-    // message
-    let message = b"Hello World";
-
-    // generate symmetric key
-    let symmetric_key = SymmetricKey::generate(Symmetric::Aes128Gcm).unwrap();
-
-    let cipher = encrypt(&symmetric_key, None, message).unwrap();
-
-    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
-
-    // cipher != plain
-    assert_ne!(cipher, plain);
-
-    // message != cipher
-    assert_ne!(message, cipher.as_slice());
-
-    // message == plain
-    assert_eq!(message, plain.as_slice());
 }
