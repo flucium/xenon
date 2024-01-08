@@ -12,40 +12,48 @@ mod aead;
 mod aes;
 mod chacha20;
 
-/*
-    ToDo
-        AES-128-CBC
-        AES-192-CBC
-        AES-256-CBC
-        Assosiated Data
-*/
-
-struct AssosiatedData<'a> {
-    info: &'a [u8],
-    algorithm: Symmetric,
-}
-
 /// Symmetric Decryption
 ///
-/// **!! Under development !!**
-pub fn decrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> {
-    // get algorithm
+/// # Arguments
+/// * `symmetric_key` - Symmetric key
+///
+/// * `assosiated_data` - Associated data (optional: use with AEAD)
+///
+/// * `message` - Message
+///
+/// # Example
+/// ```
+/// use xenon_crypto::{Symmetric, SymmetricKey, encrypt,decrypt};
+///
+/// let symmetric_key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
+///
+/// let cipher = encrypt(&symmetric_key, &[], b"Hello World").unwrap();
+///
+/// let plain = decrypt(&symmetric_key, &[], &cipher).unwrap();
+/// ```
+pub fn decrypt(
+    symmetric_key: &SymmetricKey,
+    assosiated_data: Option<&[u8]>,
+    message: &[u8],
+) -> Result<Vec<u8>> {
     let algorithm: Symmetric = symmetric_key.algorithm().try_into().unwrap();
 
-    // get key bytes
-    let key_bytes = symmetric_key.as_bytes();
-
-    // check message length
     check_message_length(algorithm, message)?;
 
-    // get message, iv
+    let key_bytes = symmetric_key.as_bytes();
+
     let (cipher, iv) = split_message_and_iv(algorithm, message)?;
+
+    let assosiated_data = match assosiated_data {
+        Some(data) => data,
+        None => &[],
+    };
 
     let plain = match algorithm {
         Symmetric::Aes128Gcm => aes_128_gcm_decrypt(
             key_bytes.try_into().unwrap(),
             iv.try_into().unwrap(),
-            &[],
+            assosiated_data,
             cipher,
         )
         .map_err(|_| {
@@ -57,7 +65,7 @@ pub fn decrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
         Symmetric::Aes192Gcm => aes_192_gcm_decrypt(
             key_bytes.try_into().unwrap(),
             iv.try_into().unwrap(),
-            &[],
+            assosiated_data,
             cipher,
         )
         .map_err(|_| {
@@ -69,7 +77,7 @@ pub fn decrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
         Symmetric::Aes256Gcm => aes_256_gcm_decrypt(
             key_bytes.try_into().unwrap(),
             iv.try_into().unwrap(),
-            &[],
+            assosiated_data,
             cipher,
         )
         .map_err(|_| {
@@ -81,7 +89,7 @@ pub fn decrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
         Symmetric::ChaCha20Poly1305 => chacha20_poly1305_decrypt(
             key_bytes.try_into().unwrap(),
             iv.try_into().unwrap(),
-            &[],
+            assosiated_data,
             cipher,
         )
         .map_err(|_| {
@@ -97,26 +105,50 @@ pub fn decrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
 
 /// Symmetric Encryption
 ///
-/// **!! Under development !!**
-pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> {
+/// # Arguments
+/// * `symmetric_key` - Symmetric key
+///
+/// * `assosiated_data` - Associated data (optional: use with AEAD)
+///
+/// * `message` - Message
+///
+/// # Example
+/// ```
+/// use xenon_crypto::{Symmetric, SymmetricKey, encrypt,decrypt};
+///
+/// let symmetric_key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
+///
+/// let cipher = encrypt(&symmetric_key, &[], b"Hello World").unwrap();
+///```
+pub fn encrypt(
+    symmetric_key: &SymmetricKey,
+    assosiated_data: Option<&[u8]>,
+    message: &[u8],
+) -> Result<Vec<u8>> {
     is_symmetric_key_expired(symmetric_key)?;
 
-    // get algorithm
     let algorithm: Symmetric = symmetric_key.algorithm().try_into().unwrap();
 
-    // get key bytes
     let key_bytes = symmetric_key.as_bytes();
+
+    let assosiated_data = match assosiated_data {
+        Some(data) => data,
+        None => &[],
+    };
 
     let mut cipher_buffer = Vec::new();
 
-    // encrypt
     let (bytes, nonce) = match algorithm {
         Symmetric::Aes128Gcm => {
-            // generate nonce
             let nonce = gen_iv::<SIZE_12_BYTE>()?;
 
-            let cipher = aes_128_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
-                .map_err(|_| {
+            let cipher = aes_128_gcm_encrypt(
+                key_bytes.try_into().unwrap(),
+                &nonce,
+                assosiated_data,
+                message,
+            )
+            .map_err(|_| {
                 Error::new(
                     ErrorKind::EncryptionFailed,
                     String::from("AES-128-GCM Encryption failed"),
@@ -127,11 +159,15 @@ pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
         }
 
         Symmetric::Aes192Gcm => {
-            // generate nonce
             let nonce = gen_iv::<SIZE_12_BYTE>()?;
 
-            let cipher = aes_192_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
-                .map_err(|_| {
+            let cipher = aes_192_gcm_encrypt(
+                key_bytes.try_into().unwrap(),
+                &nonce,
+                assosiated_data,
+                message,
+            )
+            .map_err(|_| {
                 Error::new(
                     ErrorKind::EncryptionFailed,
                     String::from("AES-192-GCM Encryption failed"),
@@ -142,11 +178,15 @@ pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
         }
 
         Symmetric::Aes256Gcm => {
-            // generate nonce
             let nonce = gen_iv::<SIZE_12_BYTE>()?;
 
-            let cipher = aes_256_gcm_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
-                .map_err(|_| {
+            let cipher = aes_256_gcm_encrypt(
+                key_bytes.try_into().unwrap(),
+                &nonce,
+                assosiated_data,
+                message,
+            )
+            .map_err(|_| {
                 Error::new(
                     ErrorKind::EncryptionFailed,
                     String::from("AES-256-GCM Encryption failed"),
@@ -160,14 +200,18 @@ pub fn encrypt(symmetric_key: &SymmetricKey, message: &[u8]) -> Result<Vec<u8>> 
             // generate nonce
             let nonce = gen_iv::<SIZE_12_BYTE>()?;
 
-            let cipher =
-                chacha20_poly1305_encrypt(key_bytes.try_into().unwrap(), &nonce, &[], message)
-                    .map_err(|_| {
-                        Error::new(
-                            ErrorKind::EncryptionFailed,
-                            String::from("ChaCha20-Poly1305 Encryption failed"),
-                        )
-                    })?;
+            let cipher = chacha20_poly1305_encrypt(
+                key_bytes.try_into().unwrap(),
+                &nonce,
+                assosiated_data,
+                message,
+            )
+            .map_err(|_| {
+                Error::new(
+                    ErrorKind::EncryptionFailed,
+                    String::from("ChaCha20-Poly1305 Encryption failed"),
+                )
+            })?;
 
             (cipher, nonce)
         }
@@ -194,9 +238,8 @@ fn check_message_length(algorithm: Symmetric, message: &[u8]) -> Result<()> {
         | Symmetric::Aes192Gcm
         | Symmetric::Aes256Gcm
         | Symmetric::ChaCha20Poly1305 => SIZE_12_BYTE,
-
         // 0 bytes
-        _ => return Ok(()),
+        // _ => return Ok(()),
     };
 
     // get message length
@@ -230,8 +273,7 @@ fn split_message_and_iv(algorithm: Symmetric, message: &[u8]) -> Result<(&[u8], 
         | Symmetric::Aes192Gcm
         | Symmetric::Aes256Gcm
         | Symmetric::ChaCha20Poly1305 => SIZE_12_BYTE,
-
-        _ => 0,
+        // _ => 0,
     };
 
     // get cipher bytes
@@ -290,9 +332,9 @@ fn test_symmetric_chacha20_poly1305() {
     // generate symmetric key
     let symmetric_key = SymmetricKey::generate(Symmetric::ChaCha20Poly1305).unwrap();
 
-    let cipher = encrypt(&symmetric_key, message).unwrap();
+    let cipher = encrypt(&symmetric_key, None, message).unwrap();
 
-    let plain = decrypt(&symmetric_key, &cipher).unwrap();
+    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
 
     // cipher != plain
     assert_ne!(cipher, plain);
@@ -312,9 +354,9 @@ fn test_symmetric_aes_256_gcm() {
     // generate symmetric key
     let symmetric_key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
 
-    let cipher = encrypt(&symmetric_key, message).unwrap();
+    let cipher = encrypt(&symmetric_key, None, message).unwrap();
 
-    let plain = decrypt(&symmetric_key, &cipher).unwrap();
+    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
 
     // cipher != plain
     assert_ne!(cipher, plain);
@@ -334,9 +376,9 @@ fn test_symmetric_aes_192_gcm() {
     // generate symmetric key
     let symmetric_key = SymmetricKey::generate(Symmetric::Aes192Gcm).unwrap();
 
-    let cipher = encrypt(&symmetric_key, message).unwrap();
+    let cipher = encrypt(&symmetric_key, None, message).unwrap();
 
-    let plain = decrypt(&symmetric_key, &cipher).unwrap();
+    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
 
     // cipher != plain
     assert_ne!(cipher, plain);
@@ -356,9 +398,9 @@ fn test_symmetric_aes_128_gcm() {
     // generate symmetric key
     let symmetric_key = SymmetricKey::generate(Symmetric::Aes128Gcm).unwrap();
 
-    let cipher = encrypt(&symmetric_key, message).unwrap();
+    let cipher = encrypt(&symmetric_key, None, message).unwrap();
 
-    let plain = decrypt(&symmetric_key, &cipher).unwrap();
+    let plain = decrypt(&symmetric_key, None, &cipher).unwrap();
 
     // cipher != plain
     assert_ne!(cipher, plain);
