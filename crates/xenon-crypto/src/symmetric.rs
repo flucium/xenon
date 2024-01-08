@@ -226,7 +226,6 @@ pub fn encrypt(
     Ok(cipher_buffer)
 }
 
-// check message length
 #[inline]
 fn check_message_length(algorithm: Symmetric, message: &[u8]) -> Result<()> {
     let iv_len = match algorithm {
@@ -258,7 +257,7 @@ fn check_message_length(algorithm: Symmetric, message: &[u8]) -> Result<()> {
     }
 }
 
-// split message and iv (nonce)
+
 #[inline]
 fn split_message_and_iv(algorithm: Symmetric, message: &[u8]) -> Result<(&[u8], &[u8])> {
     let message_len = message.len();
@@ -278,7 +277,6 @@ fn split_message_and_iv(algorithm: Symmetric, message: &[u8]) -> Result<(&[u8], 
     Ok((cipher, nonce))
 }
 
-// is symmetric key expired?
 #[inline]
 fn check_symmetric_key_expired(symmetric_key: &SymmetricKey) -> Result<()> {
     if symmetric_key.expiry().is_expired() == false {
@@ -291,7 +289,6 @@ fn check_symmetric_key_expired(symmetric_key: &SymmetricKey) -> Result<()> {
     }
 }
 
-// gen iv
 #[inline]
 fn gen_iv<const T: usize>() -> Result<[u8; T]> {
     match T {
