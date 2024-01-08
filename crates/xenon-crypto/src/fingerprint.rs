@@ -12,6 +12,12 @@ pub struct Fingerprint {
 }
 
 impl Fingerprint {
+
+    /// Fingerprints a public key
+    /// 
+    /// # Arguments
+    /// * `hasher` - Hash algorithm
+    /// * `public_key` - Public key
     pub fn new(hasher: Hasher, public_key: &PublicKey) -> Result<Self> {
         let bytes = match hasher {
             Hasher::Sha256 => sha256_digest(public_key.as_bytes())?.to_vec(),
@@ -23,18 +29,22 @@ impl Fingerprint {
         Ok(Self { hasher, bytes })
     }
 
+    /// Fingerprints a public key using SHA256
     pub fn new_sha256(public_key: &PublicKey) -> Result<Self> {
         Self::new(Hasher::Sha256, public_key)
     }
 
+    /// Fingerprints a public key using SHA512
     pub fn new_sha512(public_key: &PublicKey) -> Result<Self> {
         Self::new(Hasher::Sha512, public_key)
     }
 
+    /// Fingerprints a public key using SHA3-256
     pub fn new_sha3_256(public_key: &PublicKey) -> Result<Self> {
         Self::new(Hasher::Sha3_256, public_key)
     }
 
+    /// Fingerprints a public key using SHA3-512
     pub fn new_sha3_512(public_key: &PublicKey) -> Result<Self> {
         Self::new(Hasher::Sha3_512, public_key)
     }
