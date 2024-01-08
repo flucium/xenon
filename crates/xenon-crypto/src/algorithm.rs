@@ -1,6 +1,6 @@
 use xenon_common::{
     size::{
-        SIZE_114_BYTE, SIZE_12_BYTE, SIZE_16_BYTE, SIZE_24_BYTE, SIZE_32_BYTE, SIZE_56_BYTE,
+        SIZE_114_BYTE, SIZE_16_BYTE, SIZE_24_BYTE, SIZE_32_BYTE, SIZE_56_BYTE,
         SIZE_57_BYTE, SIZE_64_BYTE,
     },
     Error, ErrorKind, Result,
