@@ -13,11 +13,9 @@ pub fn sha256_digest(bytes: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
 }
 
 
-/*
-    Unit tests
-*/
 
 /*
+    Unit tests
     SHA512
     SHA256
 */

@@ -13,9 +13,6 @@ pub fn sha3_256_digest(bytes: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
 
 /*
     Unit tests
-*/
-
-/*
     SHA3_512
     SHA3_256
 */
