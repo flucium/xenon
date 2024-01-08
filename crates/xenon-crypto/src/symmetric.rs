@@ -4,7 +4,6 @@ use self::aes::{
 };
 use self::chacha20::{chacha20_poly1305_decrypt, chacha20_poly1305_encrypt};
 use crate::{algorithm::Symmetric, rand::gen, Key, SymmetricKey};
-
 use xenon_common::size::{SIZE_12_BYTE, SIZE_16_BYTE};
 use xenon_common::{Error, ErrorKind, Result};
 
@@ -230,8 +229,6 @@ pub fn encrypt(
 // check message length
 #[inline]
 fn check_message_length(algorithm: Symmetric, message: &[u8]) -> Result<()> {
-    // get iv (nonce) length
-    // let iv_len = algorithm.iv_length().unwrap_or(0);
     let iv_len = match algorithm {
         // 12 bytes
         Symmetric::Aes128Gcm
@@ -242,10 +239,8 @@ fn check_message_length(algorithm: Symmetric, message: &[u8]) -> Result<()> {
         // _ => return Ok(()),
     };
 
-    // get message length
     let message_len = message.len();
 
-    // check message length
     if message_len == 0 {
         Err(Error::new(
             ErrorKind::InvalidLength,
@@ -276,10 +271,8 @@ fn split_message_and_iv(algorithm: Symmetric, message: &[u8]) -> Result<(&[u8], 
         // _ => 0,
     };
 
-    // get cipher bytes
     let cipher = &message[..message_len - iv_len];
 
-    // get iv (nonce) bytes
     let nonce = &message[message_len - iv_len..];
 
     Ok((cipher, nonce))
@@ -311,8 +304,6 @@ fn gen_iv<const T: usize>() -> Result<[u8; T]> {
 }
 
 /*
-    !! Under development !!
-
     Unit tests
     e.g.
     cargo test --package xenon-crypto --lib -- symmetric::test_symmetric_aes_256_gcm --exact --nocapture
