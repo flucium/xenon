@@ -1,15 +1,22 @@
 use crate::{
     algorithm::{Asymmetric, Symmetric},
     curve25519, curve448,
-    hash::hkdf::{hkdf_sha256_derive, hkdf_sha512_derive},
+    hash::{
+        hkdf::{hkdf_sha256_derive, hkdf_sha512_derive},
+        sha2::sha256_digest,
+    },
     rand::gen_32,
-    Expiry, Kdf, Uuid,
+    Expiry, Kdf,
 };
-use xenon_common::{Error, ErrorKind, Result};
+use xenon_common::{
+    format::hex,
+    size::{SIZE_32_BYTE, SIZE_64_BYTE},
+    Error, ErrorKind, Result,
+};
 
 pub trait Key {
     /// Returns the key id.
-    fn id(&self) -> &Uuid;
+    fn id(&self) -> &[u8; SIZE_32_BYTE];
 
     /// Returns the key algorithm name.
     fn algorithm(&self) -> &str;
@@ -31,7 +38,7 @@ pub trait AsymmetricKey: Key {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SymmetricKey {
-    id: Uuid,
+    id: [u8; SIZE_32_BYTE],
     algorithm: Symmetric,
     expiry: Expiry,
     bytes: Vec<u8>,
@@ -54,7 +61,7 @@ impl SymmetricKey {
     /// let key = SymmetricKey::new_from_slice(Symmetric::Aes256Gcm, &[0; 32]).unwrap();
     /// ```
     pub fn new_from_slice(algorithm: Symmetric, bytes: &[u8]) -> Result<Self> {
-        let id = Uuid::new_v4();
+        let id = generate_key_id()?;
 
         let expiry = Expiry::NO_EXPIRATION;
 
@@ -92,7 +99,7 @@ impl SymmetricKey {
     /// let key = SymmetricKey::generate(Symmetric::Aes256Gcm).unwrap();
     /// ```
     pub fn generate(algorithm: Symmetric) -> Result<Self> {
-        let id = Uuid::new_v4();
+        let id = generate_key_id()?;
 
         let expiry = Expiry::NO_EXPIRATION;
 
@@ -140,7 +147,7 @@ impl SymmetricKey {
 }
 
 impl Key for SymmetricKey {
-    fn id(&self) -> &Uuid {
+    fn id(&self) -> &[u8; SIZE_32_BYTE] {
         &self.id
     }
 
@@ -166,7 +173,7 @@ impl ToString for SymmetricKey {
         let mut string = String::new();
 
         string.push_str("Key id: ");
-        string.push_str(&self.id.to_string());
+        string.push_str(&hex::encode(&self.id));
 
         string.push('\n');
 
@@ -206,11 +213,19 @@ impl TryFrom<String> for SymmetricKey {
             ))?;
         }
 
-        let id = value
-            .trim_start()
-            .trim_end()
-            .parse::<Uuid>()
-            .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Key id")))?;
+        let id = value.trim_start().trim_end();
+
+        if id.len() != SIZE_64_BYTE {
+            Err(Error::new(
+                ErrorKind::ParseFailed,
+                String::from("Invalid Key id"),
+            ))?;
+        }
+
+        let id = hex::decode(id)
+            .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Key id")))?
+            .try_into()
+            .unwrap();
 
         let (key, value) = lines
             .next()
@@ -272,7 +287,7 @@ impl TryFrom<String> for SymmetricKey {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrivateKey {
-    id: Uuid,
+    id: [u8; SIZE_32_BYTE],
     algorithm: Asymmetric,
     expiry: Expiry,
     bytes: Vec<u8>,
@@ -295,7 +310,7 @@ impl PrivateKey {
     /// let private_key = PrivateKey::generate(Asymmetric::Ed25519).unwrap();
     /// ```
     pub fn generate(algorithm: Asymmetric) -> Result<Self> {
-        let id = Uuid::new_v4();
+        let id = generate_key_id()?;
 
         let expiry = Expiry::new();
 
@@ -326,7 +341,7 @@ impl PrivateKey {
 }
 
 impl Key for PrivateKey {
-    fn id(&self) -> &Uuid {
+    fn id(&self) -> &[u8; SIZE_32_BYTE] {
         &self.id
     }
 
@@ -358,7 +373,7 @@ impl ToString for PrivateKey {
         let mut string = String::new();
 
         string.push_str("Key id: ");
-        string.push_str(&self.id.to_string());
+        string.push_str(&hex::encode(&self.id));
 
         string.push('\n');
 
@@ -406,11 +421,19 @@ impl TryFrom<String> for PrivateKey {
             ))?;
         }
 
-        let id = value
-            .trim_start()
-            .trim_end()
-            .parse::<Uuid>()
-            .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Key id")))?;
+        let id = value.trim_start().trim_end();
+
+        if id.len() != SIZE_64_BYTE {
+            Err(Error::new(
+                ErrorKind::ParseFailed,
+                String::from("Invalid Key id"),
+            ))?;
+        }
+
+        let id = hex::decode(id)
+            .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Key id")))?
+            .try_into()
+            .unwrap();
 
         let (key, value) = lines
             .next()
@@ -494,7 +517,7 @@ impl TryFrom<String> for PrivateKey {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicKey {
-    id: Uuid,
+    id: [u8; SIZE_32_BYTE],
     algorithm: Asymmetric,
     expiry: Expiry,
     bytes: Vec<u8>,
@@ -518,7 +541,7 @@ impl PublicKey {
     /// let public_key = PublicKey::new_from_slice(Asymmetric::Ed25519, &[0; 32]).unwrap();
     /// ```
     pub fn new_from_slice(algorithm: Asymmetric, bytes: &[u8]) -> Result<Self> {
-        let id = Uuid::new_v4();
+        let id = generate_key_id()?;
 
         let expiry = Expiry::NO_EXPIRATION;
 
@@ -620,7 +643,7 @@ impl PublicKey {
 }
 
 impl Key for PublicKey {
-    fn id(&self) -> &Uuid {
+    fn id(&self) -> &[u8; SIZE_32_BYTE] {
         &self.id
     }
 
@@ -652,7 +675,7 @@ impl ToString for PublicKey {
         let mut string = String::new();
 
         string.push_str("Key id: ");
-        string.push_str(&self.id.to_string());
+        string.push_str(&hex::encode(&self.id));
 
         string.push('\n');
 
@@ -700,11 +723,19 @@ impl TryFrom<String> for PublicKey {
             ))?;
         }
 
-        let id = value
-            .trim_start()
-            .trim_end()
-            .parse::<Uuid>()
-            .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Key id")))?;
+        let id = value.trim_start().trim_end();
+
+        if id.len() != SIZE_64_BYTE {
+            Err(Error::new(
+                ErrorKind::ParseFailed,
+                String::from("Invalid Key id"),
+            ))?;
+        }
+
+        let id = hex::decode(id)
+            .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Key id")))?
+            .try_into()
+            .unwrap();
 
         let (key, value) = lines
             .next()
@@ -784,4 +815,14 @@ impl TryFrom<String> for PublicKey {
             signature,
         })
     }
+}
+
+// generate a key id
+fn generate_key_id() -> Result<[u8; SIZE_32_BYTE]> {
+    let bytes = gen_32().map_err(|_| Error::new(ErrorKind::Internal, String::default()))?;
+
+    let digest =
+        sha256_digest(&bytes).map_err(|_| Error::new(ErrorKind::Internal, String::default()))?;
+
+    Ok(digest)
 }
