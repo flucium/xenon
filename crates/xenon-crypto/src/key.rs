@@ -29,6 +29,9 @@ pub trait Key {
 
     /// Returns the raw key bytes.
     fn bytes(&self) -> &[u8];
+
+    /// Sets the key expiry.
+    fn set_expiry(&mut self, expiry: Expiry) -> &mut Self;
 }
 
 pub trait AsymmetricKey: Key {
@@ -165,6 +168,11 @@ impl Key for SymmetricKey {
 
     fn bytes(&self) -> &[u8] {
         unsafe { self.bytes.get_unchecked(..self.algorithm.key_length()) }
+    }
+
+    fn set_expiry(&mut self, expiry: Expiry) -> &mut Self {
+        self.expiry = expiry;
+        self
     }
 }
 
@@ -375,6 +383,11 @@ impl Key for PrivateKey {
 
     fn bytes(&self) -> &[u8] {
         unsafe { self.bytes.get_unchecked(..self.algorithm.key_length()) }
+    }
+
+    fn set_expiry(&mut self, expiry: Expiry) -> &mut Self {
+        self.expiry = expiry;
+        self
     }
 }
 
@@ -682,6 +695,11 @@ impl Key for PublicKey {
     fn bytes(&self) -> &[u8] {
         unsafe { self.bytes.get_unchecked(..self.algorithm.key_length()) }
     }
+
+    fn set_expiry(&mut self, expiry: Expiry) -> &mut Self {
+        self.expiry = expiry;
+        self
+    }
 }
 
 impl AsymmetricKey for PublicKey {
@@ -837,7 +855,7 @@ impl TryFrom<String> for PublicKey {
     }
 }
 
-// generate a key id
+#[inline]
 fn generate_key_id() -> Result<[u8; SIZE_32_BYTE]> {
     let bytes = gen_32().map_err(|_| Error::new(ErrorKind::Internal, String::default()))?;
 
