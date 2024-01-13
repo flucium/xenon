@@ -20,10 +20,10 @@ impl Fingerprint {
     /// * `public_key` - Public key
     pub fn new(hasher: Hasher, public_key: &PublicKey) -> Result<Self> {
         let bytes = match hasher {
-            Hasher::Sha256 => sha256_digest(public_key.as_bytes())?.to_vec(),
-            Hasher::Sha512 => sha512_digest(public_key.as_bytes())?.to_vec(),
-            Hasher::Sha3_256 => sha3_256_digest(public_key.as_bytes())?.to_vec(),
-            Hasher::Sha3_512 => sha3_512_digest(public_key.as_bytes())?.to_vec(),
+            Hasher::Sha256 => sha256_digest(public_key.bytes())?.to_vec(),
+            Hasher::Sha512 => sha512_digest(public_key.bytes())?.to_vec(),
+            Hasher::Sha3_256 => sha3_256_digest(public_key.bytes())?.to_vec(),
+            Hasher::Sha3_512 => sha3_512_digest(public_key.bytes())?.to_vec(),
         };
 
         Ok(Self { hasher, bytes })

@@ -239,7 +239,7 @@ pub fn verify(public_key: &PublicKey, message: &[u8], signature: &Signature) -> 
 
     let id = public_key.id();
 
-    let public_key_bytes = public_key.as_bytes();
+    let public_key_bytes = public_key.bytes();
 
     let md = hash_digest(Hasher::try_from(signature.hasher())?, message)?;
 
@@ -292,7 +292,7 @@ pub fn sign(private_key: &PrivateKey, hasher: Hasher, message: &[u8]) -> Result<
 
     let id = private_key.id();
 
-    let private_key_bytes = private_key.as_bytes();
+    let private_key_bytes = private_key.bytes();
 
     let md = hash_digest(hasher, message)?;
 

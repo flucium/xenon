@@ -39,7 +39,7 @@ pub fn decrypt(
 
     check_message_length(algorithm, message)?;
 
-    let key_bytes = symmetric_key.as_bytes();
+    let key_bytes = symmetric_key.bytes();
 
     let (cipher, iv) = split_message_and_iv(algorithm, message)?;
 
@@ -128,7 +128,7 @@ pub fn encrypt(
 
     let algorithm: Symmetric = symmetric_key.algorithm().try_into().unwrap();
 
-    let key_bytes = symmetric_key.as_bytes();
+    let key_bytes = symmetric_key.bytes();
 
     let assosiated_data = match assosiated_data {
         Some(data) => data,
