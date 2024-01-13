@@ -27,8 +27,8 @@ pub trait Key {
     /// Returns the key length.
     fn len(&self) -> usize;
 
-    /// Returns the key bytes.
-    fn as_bytes(&self) -> &[u8];
+    /// Returns the raw key bytes.
+    fn bytes(&self) -> &[u8];
 }
 
 pub trait AsymmetricKey: Key {
@@ -163,7 +163,7 @@ impl Key for SymmetricKey {
         self.algorithm.key_length()
     }
 
-    fn as_bytes(&self) -> &[u8] {
+    fn bytes(&self) -> &[u8] {
         unsafe { self.bytes.get_unchecked(..self.algorithm.key_length()) }
     }
 }
@@ -373,7 +373,7 @@ impl Key for PrivateKey {
         self.algorithm.key_length()
     }
 
-    fn as_bytes(&self) -> &[u8] {
+    fn bytes(&self) -> &[u8] {
         unsafe { self.bytes.get_unchecked(..self.algorithm.key_length()) }
     }
 }
@@ -606,7 +606,7 @@ impl PublicKey {
             Asymmetric::Ed25519 => curve25519::ed25519_gen_public_key(
                 unsafe {
                     priavte_key
-                        .as_bytes()
+                        .bytes()
                         .get_unchecked(..priavte_key.algorithm.key_length())
                 }
                 .try_into()
@@ -618,7 +618,7 @@ impl PublicKey {
             Asymmetric::X25519 => curve25519::x25519_gen_public_key(
                 unsafe {
                     priavte_key
-                        .as_bytes()
+                        .bytes()
                         .get_unchecked(..priavte_key.algorithm.key_length())
                 }
                 .try_into()
@@ -630,7 +630,7 @@ impl PublicKey {
             Asymmetric::Ed448 => curve448::ed448_gen_public_key(
                 unsafe {
                     priavte_key
-                        .as_bytes()
+                        .bytes()
                         .get_unchecked(..priavte_key.algorithm.key_length())
                 }
                 .try_into()
@@ -642,7 +642,7 @@ impl PublicKey {
             Asymmetric::X448 => curve448::x448_gen_public_key(
                 unsafe {
                     priavte_key
-                        .as_bytes()
+                        .bytes()
                         .get_unchecked(..priavte_key.algorithm.key_length())
                 }
                 .try_into()
@@ -679,7 +679,7 @@ impl Key for PublicKey {
         self.algorithm.key_length()
     }
 
-    fn as_bytes(&self) -> &[u8] {
+    fn bytes(&self) -> &[u8] {
         unsafe { self.bytes.get_unchecked(..self.algorithm.key_length()) }
     }
 }
