@@ -1,15 +1,15 @@
 use crate::{
-    algorithm::{Asymmetric, Symmetric},
+    algorithm::{Asymmetric, Hasher, Symmetric},
     curve25519, curve448,
     hash::{
         hkdf::{hkdf_sha256_derive, hkdf_sha512_derive},
         sha2::sha256_digest,
     },
     rand::gen_32,
-    Expiry, Kdf,
+    sign, Expiry, Kdf, Signature,
 };
 use xenon_common::{
-    format::hex,
+    format::{base64ct, hex},
     size::{SIZE_32_BYTE, SIZE_64_BYTE},
     Error, ErrorKind, Result,
 };
@@ -33,7 +33,7 @@ pub trait Key {
 
 pub trait AsymmetricKey: Key {
     /// Returns the key signature.
-    fn signature(&self) -> Option<&[u8]>;
+    fn signature(&self) -> Option<&Signature>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -291,7 +291,7 @@ pub struct PrivateKey {
     algorithm: Asymmetric,
     expiry: Expiry,
     bytes: Vec<u8>,
-    signature: Option<Vec<u8>>,
+    signature: Option<Signature>,
 }
 
 impl PrivateKey {
@@ -338,6 +338,22 @@ impl PrivateKey {
             signature: None,
         })
     }
+
+    // ToDo!()
+    pub fn derive(&self, algorithm: Asymmetric, hasher: Hasher) -> Result<Self> {
+        if !matches!(self.algorithm, Asymmetric::Ed25519 | Asymmetric::Ed448) {
+            Err(Error::new(ErrorKind::ToDo, String::default()))?;
+        }
+
+        // PrivateKey::generate(algorithm);
+        let mut private_key = Self::generate(algorithm)?;
+
+        let signature = sign(self, hasher, &private_key.bytes)?;
+
+        private_key.signature = Some(signature);
+
+        Ok(private_key)
+    }
 }
 
 impl Key for PrivateKey {
@@ -363,8 +379,8 @@ impl Key for PrivateKey {
 }
 
 impl AsymmetricKey for PrivateKey {
-    fn signature(&self) -> Option<&[u8]> {
-        self.signature.as_deref()
+    fn signature(&self) -> Option<&Signature> {
+        self.signature.as_ref()
     }
 }
 
@@ -392,11 +408,15 @@ impl ToString for PrivateKey {
 
         string.push('\n');
 
-        string.push_str("Signature: ");
-        match &self.signature {
-            Some(signature) => string.push_str(&openssl::base64::encode_block(&signature)),
-            None => string.push_str(&openssl::base64::encode_block(&[])),
+        let signature = match self.signature {
+            Some(signature) => {
+                let bytes = signature.to_vec();
+                base64ct::encode(&bytes)
+            }
+            None => base64ct::encode(&[]),
         };
+        string.push_str("Signature: ");
+        string.push_str(&signature);
 
         string
     }
@@ -501,7 +521,7 @@ impl TryFrom<String> for PrivateKey {
             .map_err(|_| Error::new(ErrorKind::ParseFailed, String::from("Invalid Signature")))?;
 
         let signature = match signature.len() > 0 {
-            true => Some(signature),
+            true => Some(Signature::try_from(signature)?),
             false => None,
         };
 
@@ -665,8 +685,8 @@ impl Key for PublicKey {
 }
 
 impl AsymmetricKey for PublicKey {
-    fn signature(&self) -> Option<&[u8]> {
-        self.signature.as_deref()
+    fn signature(&self) -> Option<&Signature> {
+        todo!()
     }
 }
 
