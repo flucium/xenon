@@ -20,6 +20,7 @@ use xenon_common::{
     Error, ErrorKind, Result,
 };
 
+/// Signature
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Signature {
     length: (usize, usize, usize, usize, usize),
@@ -31,6 +32,7 @@ pub struct Signature {
 }
 
 impl Signature {
+    /// Creates a new signature.
     pub fn new(
         algorithm: &[u8],
         hasher: &[u8],
@@ -78,26 +80,32 @@ impl Signature {
         signature
     }
 
+    /// Returns the algorithm of the signature.
     pub fn algorithm(&self) -> &[u8] {
         &self.algorithm[..self.algorithm_length()]
     }
 
+    /// Returns the hasher of the signature.
     pub fn hasher(&self) -> &[u8] {
         &self.hasher[..self.hasher_length()]
     }
 
+    /// Returns the key id of the signature.
     pub fn key_id(&self) -> &[u8] {
         &self.key_id[..self.key_id_length()]
     }
 
+    /// Returns the timestamp of the signature.
     pub fn timestamp(&self) -> &[u8] {
         &self.timestamp[..self.timestamp_length()]
     }
 
+    /// Returns the raw bytes of the signature.
     pub fn bytes(&self) -> &[u8] {
         &self.bytes[..self.bytes_length()]
     }
 
+    /// Signature to raw vector (bytes).
     pub fn to_vec(&self) -> Vec<u8> {
         let mut buffer = Vec::with_capacity(
             self.length.0
@@ -232,6 +240,23 @@ impl TryFrom<Vec<u8>> for Signature {
     }
 }
 
+/// Verifies a message with a public key.
+/// 
+/// # Arguments
+/// * `public_key` - The public key to verify the message with.
+/// * `message` - The message to verify.
+/// * `signature` - The signature to verify the message with.
+/// 
+/// # Example
+/// ```
+/// let private_key = xenon_crypto::PrivateKey::generate(xenon_crypto::Asymmetric::Ed25519).unwrap();
+/// 
+/// let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
+/// 
+/// let signature = xenon_crypto::sign(&private_key, xenon_crypto::Hasher::Sha256, b"Hello World").unwrap();
+/// 
+/// let is_ok = xenon_crypto::verify(&public_key, b"Hello World", &signature).unwrap();
+/// ```
 pub fn verify(public_key: &PublicKey, message: &[u8], signature: &Signature) -> Result<bool> {
     check_public_key_expired(public_key)?;
 
@@ -285,6 +310,21 @@ pub fn verify(public_key: &PublicKey, message: &[u8], signature: &Signature) -> 
     Ok(result)
 }
 
+/// Signs a message with a private key.
+/// 
+/// # Arguments
+/// * `private_key` - The private key to sign the message with.
+/// * `hasher` - The hasher to use.
+/// * `message` - The message to sign.
+/// 
+/// # Example
+/// ```
+/// let private_key = xenon_crypto::PrivateKey::generate(xenon_crypto::Asymmetric::Ed25519).unwrap();
+/// 
+/// let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
+/// 
+/// let signature = xenon_crypto::sign(&private_key, xenon_crypto::Hasher::Sha256, b"Hello World").unwrap();
+/// ```
 pub fn sign(private_key: &PrivateKey, hasher: Hasher, message: &[u8]) -> Result<Signature> {
     check_private_key_expired(private_key)?;
 
