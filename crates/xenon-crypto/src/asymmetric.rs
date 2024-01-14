@@ -6,7 +6,9 @@ pub(super) mod curve25519;
 pub(super) mod curve448;
 
 use crate::{
-    curve25519::{ed25519_sign, ed25519_verify, x25519_diffie_hellman},
+    curve25519::{
+        ed25519_sign, ed25519_verify, x25519_diffie_hellman, x25519_diffie_hellman_ephemeral,
+    },
     curve448::{ed448_sign, ed448_verify, x448_diffie_hellman, x448_diffie_hellman_ephemeral},
     hash::{
         sha2::{sha256_digest, sha512_digest},
@@ -19,8 +21,6 @@ use xenon_common::{
     size::{SIZE_10_BYTE, SIZE_114_BYTE},
     Error, ErrorKind, Result,
 };
-
-use self::curve25519::x25519_diffie_hellman_ephemeral;
 
 /// Diffie-Hellman
 ///
