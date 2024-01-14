@@ -4,6 +4,9 @@ use xenon_common::{
 };
 
 /// Generate cryptographically strong pseudo-random bytes
+/// 
+/// # Errors
+/// Internal error
 pub fn gen_12() -> Result<[u8; SIZE_12_BYTE]> {
     let mut buffer = [0u8; SIZE_12_BYTE];
 
@@ -13,6 +16,9 @@ pub fn gen_12() -> Result<[u8; SIZE_12_BYTE]> {
 }
 
 /// Generate cryptographically strong pseudo-random bytes
+/// 
+/// # Errors
+/// Internal error
 pub fn gen_16() -> Result<[u8; SIZE_16_BYTE]> {
     let mut buffer = [0u8; SIZE_16_BYTE];
 
@@ -22,6 +28,9 @@ pub fn gen_16() -> Result<[u8; SIZE_16_BYTE]> {
 }
 
 /// Generate cryptographically strong pseudo-random bytes
+/// 
+/// # Errors
+/// Internal error
 pub fn gen_24() -> Result<[u8; SIZE_24_BYTE]> {
     let mut buffer = [0u8; SIZE_24_BYTE];
 
@@ -31,6 +40,9 @@ pub fn gen_24() -> Result<[u8; SIZE_24_BYTE]> {
 }
 
 /// Generate cryptographically strong pseudo-random bytes
+/// 
+/// # Errors
+/// Internal error
 pub fn gen_32() -> Result<[u8; SIZE_32_BYTE]> {
     let mut buffer = [0u8; SIZE_32_BYTE];
 
