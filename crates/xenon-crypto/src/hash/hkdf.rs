@@ -9,10 +9,28 @@ use xenon_common::{
     Error, Result,
 };
 
+/// Derive a key using HKDF-SHA512
+/// 
+/// # Arguments
+/// * `ikm` - Input keying material
+/// * `salt` - Salt
+/// * `info` - Info
+/// 
+/// # Errors
+/// Internal error
 pub fn hkdf_sha512_derive(ikm: &[u8], salt: &[u8], info: &[u8]) -> Result<[u8; SIZE_64_BYTE]> {
     hkdf_extract_then_expand::<SIZE_64_BYTE>(Md::sha512(), ikm, salt, info)
 }
 
+/// Derive a key using HKDF-SHA256
+/// 
+/// # Arguments
+/// * `ikm` - Input keying material
+/// * `salt` - Salt
+/// * `info` - Info
+/// 
+/// # Errors
+/// Internal error
 pub fn hkdf_sha256_derive(ikm: &[u8], salt: &[u8], info: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
     hkdf_extract_then_expand::<SIZE_32_BYTE>(Md::sha256(), ikm, salt, info)
 }

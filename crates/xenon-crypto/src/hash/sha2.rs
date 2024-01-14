@@ -4,10 +4,24 @@ use xenon_common::Result;
 use super::digest::message_digest;
 
 
+/// Generate SHA512 digest
+/// 
+/// # Arguments
+/// * `bytes` - Bytes to digest
+/// 
+/// # Errors
+/// Internal error
 pub fn sha512_digest(bytes: &[u8]) -> Result<[u8; SIZE_64_BYTE]> {
     message_digest::<SIZE_64_BYTE>(MessageDigest::sha512(), bytes)
 }
 
+/// Generate SHA256 digest
+/// 
+/// # Arguments
+/// * `bytes` - Bytes to digest
+/// 
+/// # Errors
+/// Internal error
 pub fn sha256_digest(bytes: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
     message_digest::<SIZE_32_BYTE>(MessageDigest::sha256(), bytes)
 }

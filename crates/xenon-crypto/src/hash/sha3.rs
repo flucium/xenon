@@ -3,10 +3,24 @@ use openssl::hash::MessageDigest;
 use xenon_common::size::{SIZE_32_BYTE, SIZE_64_BYTE};
 use xenon_common::Result;
 
+/// Generate SHA3_512 digest
+/// 
+/// # Arguments
+/// * `bytes` - Bytes to digest
+/// 
+/// # Errors
+/// Internal error
 pub fn sha3_512_digest(bytes: &[u8]) -> Result<[u8; SIZE_64_BYTE]> {
     message_digest::<SIZE_64_BYTE>(MessageDigest::sha3_512(), bytes)
 }
 
+/// Generate SHA3_256 digest
+/// 
+/// # Arguments
+/// * `bytes` - Bytes to digest
+/// 
+/// # Errors
+/// Internal error
 pub fn sha3_256_digest(bytes: &[u8]) -> Result<[u8; SIZE_32_BYTE]> {
     message_digest::<SIZE_32_BYTE>(MessageDigest::sha3_256(), bytes)
 }
