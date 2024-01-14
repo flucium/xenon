@@ -6,19 +6,144 @@ pub(super) mod curve25519;
 pub(super) mod curve448;
 
 use crate::{
-    curve25519::{ed25519_sign, ed25519_verify},
-    curve448::{ed448_sign, ed448_verify},
+    curve25519::{ed25519_sign, ed25519_verify, x25519_diffie_hellman},
+    curve448::{ed448_sign, ed448_verify, x448_diffie_hellman, x448_diffie_hellman_ephemeral},
     hash::{
         sha2::{sha256_digest, sha512_digest},
         sha3::{sha3_256_digest, sha3_512_digest},
     },
-    timestamp, Asymmetric, Hasher, Key, PrivateKey, PublicKey,
+    timestamp, Asymmetric, Hasher, Key, PrivateKey, PublicKey, Symmetric, SymmetricKey,
 };
 
 use xenon_common::{
     size::{SIZE_10_BYTE, SIZE_114_BYTE},
     Error, ErrorKind, Result,
 };
+
+use self::curve25519::x25519_diffie_hellman_ephemeral;
+
+/// Diffie-Hellman
+///
+/// # Arguments
+/// * `private_key` - The private key to perform the Diffie-Hellman with.
+/// * `public_key` - The public key to perform the Diffie-Hellman with.
+/// * `symmetric` - The symmetric algorithm to use.
+///
+/// # Returns
+/// Shared Secret (SymmetricKey)
+///
+/// # Errors
+/// The error here is very likely to be an Internal error.
+///
+/// An error will occur if there is a mistake in the key pair.
+///
+/// # Example
+/// ```
+/// let private_key = xenon_crypto::PrivateKey::generate(xenon_crypto::Asymmetric::X25519).unwrap();
+///
+/// let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
+///
+/// let shared_secret = xenon_crypto::diffie_hellman(&private_key, &public_key, xenon_crypto::Symmetric::Aes128Gcm).unwrap();
+/// ```
+pub fn diffie_hellman(
+    private_key: &PrivateKey,
+    public_key: &PublicKey,
+    symmetric: Symmetric,
+) -> Result<SymmetricKey> {
+    check_private_key_expired(private_key)?;
+
+    check_public_key_expired(public_key)?;
+
+    let algorithm: Asymmetric = private_key.algorithm().try_into().unwrap();
+
+    let shared_secret = match algorithm {
+        Asymmetric::X25519 => x25519_diffie_hellman(
+            private_key.bytes().try_into().unwrap(),
+            public_key.bytes().try_into().unwrap(),
+        )
+        .map_err(|_| Error::internal_error())?
+        .to_vec(),
+
+        Asymmetric::X448 => x448_diffie_hellman(
+            private_key.bytes().try_into().unwrap(),
+            public_key.bytes().try_into().unwrap(),
+        )
+        .map_err(|_| Error::internal_error())?
+        .to_vec(),
+
+        _ => Err(Error::new(
+            ErrorKind::Unsupported,
+            String::from("Unsupported algorithm"),
+        ))?,
+    };
+
+    let symmetric_key =
+        SymmetricKey::new_from_slice(symmetric, &shared_secret[..symmetric.key_length()])?;
+
+    Ok(symmetric_key)
+}
+
+/// Diffie-Hellman Ephemeral
+///
+/// # Arguments
+/// * `public_key` - The public key to perform the Diffie-Hellman Ephemeral with.
+/// * `symmetric` - The symmetric algorithm to use.
+///
+/// # Returns
+/// Public Key, Shared Secret (SymmetricKey)
+///
+/// # Errors
+/// The error here is very likely to be an Internal error.
+///
+/// An error will occur if there is a mistake in the key pair.
+///
+/// # Example
+/// ```
+/// let private_key = xenon_crypto::PrivateKey::generate(xenon_crypto::Asymmetric::X25519).unwrap();
+///
+/// let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
+///
+/// let (ephemeral_public_key, shared_secret) = xenon_crypto::diffie_hellman_ephemeral(&public_key, xenon_crypto::Symmetric::Aes128Gcm).unwrap();
+/// ```
+pub fn diffie_hellman_ephemeral(
+    public_key: &PublicKey,
+    symmetric: Symmetric,
+) -> Result<(PublicKey, SymmetricKey)> {
+    check_public_key_expired(public_key)?;
+
+    let algorithm: Asymmetric = public_key.algorithm().try_into().unwrap();
+
+    let (public_key, shared_secret) = match algorithm {
+        Asymmetric::X25519 => {
+            let (public_key, shared_secret) =
+                x25519_diffie_hellman_ephemeral(public_key.bytes().try_into().unwrap())
+                    .map_err(|_| Error::internal_error())?;
+
+            (
+                PublicKey::new_from_slice(Asymmetric::X25519, public_key.as_slice())?,
+                SymmetricKey::new_from_slice(symmetric, &shared_secret[..symmetric.key_length()])?,
+            )
+        }
+
+        Asymmetric::X448 => {
+            let (public_key, shared_secret) =
+                x448_diffie_hellman_ephemeral(public_key.bytes().try_into().unwrap())
+                    .map_err(|_| Error::internal_error())?;
+
+            (
+                PublicKey::new_from_slice(Asymmetric::X448, public_key.as_slice())?,
+                SymmetricKey::new_from_slice(symmetric, &shared_secret[..symmetric.key_length()])?,
+            )
+        }
+
+        _ => Err(Error::new(
+            ErrorKind::Unsupported,
+            String::from("Unsupported algorithm"),
+        ))?,
+    };
+
+    Ok((public_key, shared_secret))
+}
 
 /// Signature
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -241,20 +366,20 @@ impl TryFrom<Vec<u8>> for Signature {
 }
 
 /// Verifies a message with a public key.
-/// 
+///
 /// # Arguments
 /// * `public_key` - The public key to verify the message with.
 /// * `message` - The message to verify.
 /// * `signature` - The signature to verify the message with.
-/// 
+///
 /// # Example
 /// ```
 /// let private_key = xenon_crypto::PrivateKey::generate(xenon_crypto::Asymmetric::Ed25519).unwrap();
-/// 
+///
 /// let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
-/// 
+///
 /// let signature = xenon_crypto::sign(&private_key, xenon_crypto::Hasher::Sha256, b"Hello World").unwrap();
-/// 
+///
 /// let is_ok = xenon_crypto::verify(&public_key, b"Hello World", &signature).unwrap();
 /// ```
 pub fn verify(public_key: &PublicKey, message: &[u8], signature: &Signature) -> Result<bool> {
@@ -311,18 +436,18 @@ pub fn verify(public_key: &PublicKey, message: &[u8], signature: &Signature) -> 
 }
 
 /// Signs a message with a private key.
-/// 
+///
 /// # Arguments
 /// * `private_key` - The private key to sign the message with.
 /// * `hasher` - The hasher to use.
 /// * `message` - The message to sign.
-/// 
+///
 /// # Example
 /// ```
 /// let private_key = xenon_crypto::PrivateKey::generate(xenon_crypto::Asymmetric::Ed25519).unwrap();
-/// 
+///
 /// let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
-/// 
+///
 /// let signature = xenon_crypto::sign(&private_key, xenon_crypto::Hasher::Sha256, b"Hello World").unwrap();
 /// ```
 pub fn sign(private_key: &PrivateKey, hasher: Hasher, message: &[u8]) -> Result<Signature> {
