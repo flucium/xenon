@@ -114,3 +114,25 @@ fn test_ed448_verify_fail() {
 
     assert_eq!(verified.unwrap(), false);
 }
+
+#[test]
+fn test_x25519() {
+    let private_key = xenon_crypto::PrivateKey::generate(Asymmetric::X25519).unwrap();
+
+    let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
+
+    let shared_secret = xenon_crypto::diffie_hellman(&private_key, &public_key, xenon_crypto::Symmetric::Aes128Gcm);
+
+    assert!(shared_secret.is_ok());
+}
+
+#[test]
+fn test_x448() {
+    let private_key = xenon_crypto::PrivateKey::generate(Asymmetric::X448).unwrap();
+
+    let public_key = xenon_crypto::PublicKey::from_private_key(&private_key).unwrap();
+
+    let shared_secret = xenon_crypto::diffie_hellman(&private_key, &public_key, xenon_crypto::Symmetric::Aes128Gcm);
+
+    assert!(shared_secret.is_ok());
+}
