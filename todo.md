@@ -75,8 +75,7 @@
 
 - Other
   - [x] OpenSSL
-  - [x] UUID (v4)
   - [x] Date Time (UTC)
   - [x] Expiry
   - [x] Fingerprint (Public key)
-  - [ ] Timestamp
+  - [x] Timestamp
