@@ -3,7 +3,6 @@ mod asymmetric;
 mod expiry;
 mod fingerprint;
 mod hash;
-mod hybrid;
 mod key;
 mod symmetric;
 // pub mod
@@ -14,14 +13,12 @@ pub use algorithm::*;
 pub use asymmetric::*;
 pub use expiry::*;
 pub use fingerprint::*;
-pub use hybrid::*;
 pub use key::*;
 pub use symmetric::*;
 
 // Re-export
 pub use chrono::{NaiveDate as Date, Utc};
 pub use openssl;
-pub use uuid::Uuid;
 
 /// Compare two byte slices in constant time.
 ///

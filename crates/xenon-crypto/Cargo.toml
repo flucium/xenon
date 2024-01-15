@@ -8,9 +8,6 @@ edition = "2021"
 # https://github.com/sfackler/rust-openssl
 openssl = "0.10.61"
 
-# https://github.com/uuid-rs/uuid
-uuid = {version="1.6.0", features = ["v4"]}
-
 # https://github.com/chronotope/chrono
 chrono = "0.4.31"
 
