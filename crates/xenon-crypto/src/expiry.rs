@@ -1,7 +1,7 @@
 use crate::{Date, Utc};
 use xenon_common::{size::SIZE_10_BYTE, Error, ErrorKind, Result};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Expiry(Option<Date>);
 
 impl Expiry {
