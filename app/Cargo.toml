@@ -1,0 +1,12 @@
+[package]
+name = "xenon"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+clap = {version="4", features=["derive"]}
+
+# Internal
+xenon-common = { path = "../crates/xenon-common" }
+xenon-crypto = { path = "../crates/xenon-crypto" }
+xenon-keyring = { path = "../crates/xenon-keyring" }
