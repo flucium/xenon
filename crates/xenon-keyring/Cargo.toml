@@ -8,4 +8,4 @@ edition = "2021"
 regex = "1.9.5"
 
 #https://github.com/rusqlite/rusqlite
-rusqlite = "0.29.0"
+rusqlite = "0.30.0"
