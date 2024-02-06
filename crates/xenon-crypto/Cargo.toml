@@ -1,0 +1,39 @@
+[package]
+name = "xenon-crypto"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+# https://github.com/uuid-rs/uuid/
+uuid = {version="1.7.0", features=["v4"]}
+
+# https://github.com/chronotope/chrono/
+chrono = "0.4.33"
+
+# https://github.com/rust-random/rand/
+rand = "0.8.5"
+
+# https://github.com/RustCrypto/traits/
+digest = "0.10.7"
+aead = "0.5.2"
+
+# https://github.com/RustCrypto/hashes/
+sha2 = "0.10.8"
+
+# https://github.com/RustCrypto/formats/
+base64ct = {version="1.6.0", features=["alloc"]}
+pem-rfc7468 = {version="0.7.0", features=["alloc"]}
+
+# https://github.com/RustCrypto/AEADs/
+aes-gcm = "0.10.3"
+chacha20poly1305 = "0.10.1"
+
+# https://github.com/dalek-cryptography/curve25519-dalek/
+ed25519-dalek = {version="2.1.0", features=["rand_core"]}
+x25519-dalek = {version="2.0.0", features=["static_secrets"]}
+
+# Internal
+xenon-common = {path = "../xenon-common"}
